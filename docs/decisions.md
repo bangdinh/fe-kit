@@ -80,3 +80,25 @@ chưa có ai phụ thuộc, và hai từ vựng cho một khái niệm là thứ
 Xem [ADR 0004](adr/0004-example-sinh-tu-template.md). Bổ sung: hook chỉ **cảnh báo có cấu
 trúc** (chặn commit `example/` khi không đụng template), không chạy build — hook chạy lâu
 là hook bị tắt.
+
+## D-016 · Skill `fe-architecture` là tài liệu kiến trúc CHÍNH của dự án tiêu thụ (2026-09-13)
+
+Dự án sinh ra từ kit không có `docs/architecture.md` riêng — kiến trúc của nó nằm trong
+skill `fe-architecture` mà kit phát hành.
+
+Vì sao là skill chứ không phải doc: doc phải có người nhớ ra mà mở; skill tự kích hoạt
+đúng lúc người ta hỏi "đặt file này ở đâu". Và vì nó do kit phát hành nên mọi dự án nhận
+cùng một câu trả lời, cập nhật bằng cách nâng version kit chứ không phải bằng cách sửa tay
+từng repo.
+
+Nội dung phủ tám mục: đặt file ở đâu · luật hai-người-dùng cho `shared/` · luật import một
+chiều + bảng nền tảng · **ranh giới server/client của Next** · thứ tự dựng một tính năng ·
+bảng "kit đã có, đừng dựng lại" · điều cấm · lệnh nghiệm thu.
+
+Mục nặng nhất là ranh giới server/client — đó là chỗ sai nhiều nhất với App Router, và là
+loại lỗi `type-check` KHÔNG bắt được (prop không tuần tự hoá được chỉ vỡ lúc `build`).
+
+Ngân sách description của ba skill kit phát hành: **870 ký tự** (`api-contract` 321 ·
+`fe-architecture` 382 · `git-flow` 167). Trần là 1% context window của model đang chạy —
+2.000 với model 200k. Còn rộng, nhưng đo lại mỗi khi thêm skill thứ tư: khi listing tràn,
+thứ bị bỏ description là skill ít được gọi nhất, tức skill vừa thêm.

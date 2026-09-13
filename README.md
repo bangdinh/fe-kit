@@ -38,7 +38,7 @@ Dự án sinh ra **chạy được ngay** — trang chủ công khai, chưa cầ
 
 | Skill | Trả lời |
 |---|---|
-| `fe-architecture` | Thêm code thì đặt ở đâu, import được từ đâu |
+| `fe-architecture` | Đặt file ở đâu · shared hay app · server hay client · kit đã có sẵn thứ gì |
 | `api-contract` | Envelope, phân trang, mã lỗi, và cách khai phương ngữ cho service cũ |
 | `git-flow` | Nhánh, commit, checklist trước MR, nâng cấp kit |
 
