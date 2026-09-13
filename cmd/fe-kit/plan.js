@@ -6,8 +6,13 @@
 /** Nền tảng kit hỗ trợ. Thứ tự này là thứ tự hiển thị ở mọi chỗ. */
 export const PLATFORMS = ['web', 'mobile', 'desktop'];
 
-/** Dependency trỏ về kit khi sinh dự án thật (không phải example trong repo kit). */
-export const DEFAULT_KIT_SPEC = 'git+ssh://git@git.fpt.net/fli-backend/b2b-v2/fe-kit.git#v0.1.0';
+/**
+ * Dependency trỏ về kit khi sinh dự án thật (không phải example trong repo kit).
+ *
+ * Dạng shorthand `github:owner/repo#tag` — npm và pnpm đều hiểu, và nó ngắn hơn
+ * URL git+ssh đầy đủ. `qc-kit` và `flutter-kit` cũng pin theo đúng dạng này.
+ */
+export const DEFAULT_KIT_SPEC = 'github:bangdinh/fe-kit#v0.1.0';
 
 export class PlanError extends Error {}
 

@@ -47,12 +47,12 @@ Chúng **do kit phát hành** — sửa tại chỗ sẽ mất ở lần nâng c
 ## 2. Pin version, và nâng cấp
 
 Dự án client pin **đúng một version** — mô hình của `b2b-gokit` và `qc-kit`.
-Kit chưa publish lên registry nội bộ nên pin theo tag git:
+Kit chưa publish lên registry nên pin theo tag git:
 
 ```jsonc
 // package.json của dự án
 "dependencies": {
-  "fe-kit": "git+ssh://git@git.fpt.net/fli-backend/b2b-v2/fe-kit.git#v0.1.0"
+  "fe-kit": "github:bangdinh/fe-kit#v0.1.0"
 }
 ```
 

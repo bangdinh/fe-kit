@@ -1,6 +1,6 @@
 # Example
 
-Dựng trên [`fe-kit`](https://git.fpt.net/fli-backend/b2b-v2/fe-kit) v0.1.0 —
+Dựng trên [`fe-kit`](https://github.com/bangdinh/fe-kit) v0.1.0 —
 nền tảng: **web, mobile, desktop**.
 
 ## Chạy

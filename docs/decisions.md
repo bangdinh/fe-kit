@@ -12,8 +12,11 @@ Quyết định **khó lùi** thì ngoài mục ở đây còn có một ADR tro
 ## D-009 · Kit là repo riêng, sibling của qc-kit (2026-09-13)
 
 Theo D-004 của giai đoạn 1 ("khi kit tách repo riêng thì bê nguyên folder"). Vị trí:
-`01.webfirst/fe-kit`, cạnh `qc-kit`. Remote dự kiến
-`git@git.fpt.net:fli-backend/b2b-v2/fe-kit.git` — **chưa tạo**.
+`01.webfirst/fe-kit`, cạnh `qc-kit`.
+
+Remote: **`git@github.com:bangdinh/fe-kit.git`** — GitHub, không phải GitLab FPT, giống
+`qc-kit` (`github:bangdinh/qc-kit`) và `flutter-kit`. Dự án tiêu thụ pin bằng shorthand
+`github:bangdinh/fe-kit#vX.Y.Z`, dạng mà cả npm lẫn pnpm đều hiểu.
 
 Folder `docs/fe-kit/` của camera đã được sao sang [history/](history/). Bản ở camera nên
 được xoá trong một MR riêng của repo đó, không xoá kèm ở đây.

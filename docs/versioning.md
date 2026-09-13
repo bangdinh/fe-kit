@@ -24,7 +24,7 @@ Script sẽ: chặn nếu cây làm việc bẩn hoặc tag đã có hoặc CHAN
 
 ```jsonc
 "dependencies": {
-  "fe-kit": "git+ssh://git@git.fpt.net/fli-backend/b2b-v2/fe-kit.git#v0.1.0"
+  "fe-kit": "github:bangdinh/fe-kit#v0.1.0"
 }
 ```
 

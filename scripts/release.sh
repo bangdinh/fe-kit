@@ -41,7 +41,7 @@ fi
 
 node -e "const f='package.json',fs=require('fs');const d=JSON.parse(fs.readFileSync(f));d.version='$BARE';fs.writeFileSync(f,JSON.stringify(d,null,2)+'\n')"
 # Dự án sinh ra phải pin ĐÚNG tag vừa cắt — nếu không, người dùng kit nhận bản cũ.
-sed -i '' -E "s|(fe-kit\.git#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|" cmd/fe-kit/plan.js
+sed -i '' -E "s|(fe-kit#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|" cmd/fe-kit/plan.js
 
 git add package.json cmd/fe-kit/plan.js CHANGELOG.md
 git commit -m "chore(release): $VERSION"
