@@ -1,0 +1,16 @@
+{
+  "name": "@{{name}}/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "type-check": "tsc --noEmit" },
+  "dependencies": {
+    "fe-kit": "{{kitSpec}}"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

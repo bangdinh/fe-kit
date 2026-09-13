@@ -1,0 +1,30 @@
+// Phiên của web: cookie, cấu hình OIDC, refresh. Một chỗ, vì mọi route đều
+// cần đúng bộ này và lệch một cái là kẹt nửa vời.
+import { loadOidcConfig, refreshSession, type OidcConfig, type TokenSet } from 'fe-kit/auth';
+import { createSessionCookies } from 'fe-kit/server';
+import { env, OIDC_CLIENT_ID } from '@{{name}}/shared';
+
+export const sessionCookies = createSessionCookies();
+
+/** Realm/tenant có thể khác nhau theo phiên — truyền vào từ chỗ biết. */
+export function discoveryUrl(): string {
+  return `${env.endpoint('ssoIssuer').replace(/\/+$/, '')}/.well-known/openid-configuration`;
+}
+
+export function redirectUri(origin: string): string {
+  return `${origin}/api/auth/callback`;
+}
+
+export function oidcConfig(origin: string): Promise<OidcConfig> {
+  return loadOidcConfig({
+    discoveryUrl: discoveryUrl(),
+    clientId: process.env.OIDC_CLIENT_ID ?? OIDC_CLIENT_ID,
+    clientSecret: process.env.OIDC_CLIENT_SECRET,
+    redirectUri: redirectUri(origin),
+    scope: 'openid profile email',
+  });
+}
+
+export async function refreshWith(refreshToken: string, origin: string): Promise<TokenSet> {
+  return refreshSession(await oidcConfig(origin), refreshToken);
+}

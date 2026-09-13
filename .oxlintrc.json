@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "categories": { "correctness": "error", "suspicious": "warn" },
+  "ignorePatterns": ["cmd/fe-kit/templates/**", "example/**", "node_modules/**"],
+  "rules": {
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/logger/sinks.ts"],
+      "rules": { "no-console": "off" }
+    },
+    {
+      "files": ["src/access/profile.ts", "src/config/env.ts"],
+      "rules": { "no-console": "off" }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // TypeScript 7 đã bỏ `moduleResolution: node10`. Tiến trình main của
+    // Electron là CommonJS, nên dùng `node18`: nó chọn CJS/ESM theo `type`
+    // trong package.json — package này không khai `type` nên ra CJS.
+    "module": "node18",
+    "moduleResolution": "node16",
+    "outDir": "dist",
+    // Giữ `rootDir` ở gốc package để output là `dist/electron/main.js`, khớp
+    // với trường `main` và với đường dẫn `../renderer` trong main.ts.
+    "rootDir": ".",
+    "verbatimModuleSyntax": false,
+    "types": ["node"]
+  },
+  "include": ["electron/**/*.ts"]
+}

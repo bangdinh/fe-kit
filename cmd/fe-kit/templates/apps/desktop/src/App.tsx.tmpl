@@ -1,0 +1,16 @@
+import type { CSSProperties } from 'react';
+import { cssVariables } from 'fe-kit/ui';
+import { env, tokensFor } from '@{{name}}/shared';
+
+// CSS custom property không nằm trong `CSSProperties`, nên phải ép kiểu — đây
+// là giới hạn của type React, không phải dấu hiệu làm sai.
+const vars = cssVariables(tokensFor('light')) as unknown as CSSProperties;
+
+export function App() {
+  return (
+    <div style={{ ...vars, padding: 'var(--fk-space-xl)', fontFamily: 'var(--fk-font-family)' }}>
+      <h1 style={{ color: 'var(--fk-color-text)' }}>{{title}}</h1>
+      <p style={{ color: 'var(--fk-color-text-muted)' }}>Môi trường: {env.current()}</p>
+    </div>
+  );
+}

@@ -1,0 +1,6 @@
+# `example/` được SINH RA từ cmd/fe-kit/templates (xem `make example`), không
+# gõ tay. Nó là bằng chứng template còn chạy được — CI build nó mỗi commit.
+packages:
+  - 'example'
+  - 'example/apps/*'
+  - 'example/shared'

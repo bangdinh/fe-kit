@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Hook nhẹ: chỉ chặn thứ KHÔNG được vào lịch sử. Việc nặng để `make verify`.
+set -uo pipefail
+
+staged="$(git diff --cached --name-only --diff-filter=ACM)"
+[ -z "$staged" ] && exit 0
+
+fail=0
+
+# 1. Secret. Bắt theo GÁN GIÁ TRỊ, không bắt theo từ khoá — nếu không thì mọi
+#    dòng tài liệu nói về token đều bị chặn và hook sẽ bị tắt sau hai ngày.
+leak="$(git diff --cached -U0 | grep -nE '^\+.*(client_secret|api[-_]?key|password|secret)[[:space:]]*[:=][[:space:]]*["\x27][^"\x27]{8,}' || true)"
+if [ -n "$leak" ]; then
+  printf '\n✗ Có vẻ là secret trong diff:\n%s\n' "$leak"
+  fail=1
+fi
+
+# 2. example/ là thứ SINH RA. Sửa tay ở đó sẽ mất ở lần `make example` sau.
+if echo "$staged" | grep -q '^example/'; then
+  if ! echo "$staged" | grep -q '^cmd/fe-kit/templates/'; then
+    printf '\n✗ Đang commit example/ mà không đụng tới templates.\n'
+    printf '  example/ được sinh từ cmd/fe-kit/templates/ — sửa ở đó rồi chạy: make example\n'
+    fail=1
+  fi
+fi
+
+exit $fail

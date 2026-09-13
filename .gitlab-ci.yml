@@ -1,0 +1,32 @@
+# CI của fe-kit. Một job, một cổng: đúng cái `make verify` mà dev chạy tại máy.
+#
+# Cố ý KHÔNG tách nhỏ thành nhiều job: cổng ở máy và cổng ở CI mà khác nhau thì
+# sớm muộn sẽ có thứ chỉ đỏ ở một bên, và bên còn lại bị bỏ qua.
+default:
+  image: node:26-slim
+  before_script:
+    - corepack enable || npm i -g pnpm@12.4.1
+    - pnpm install --frozen-lockfile
+
+stages: [verify, package]
+
+verify:
+  stage: verify
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends make git
+    - make verify
+  artifacts:
+    when: on_failure
+    paths: [example/apps/web/.next/, example/apps/desktop/dist/]
+    expire_in: 3 days
+
+# Nghiệm thu cài THẬT từ tarball. Chậm hơn `verify` nên chỉ chạy trên tag và trên
+# nhánh mặc định — nhưng phải chạy, vì workspace che mất lỗi files/exports/bin.
+smoke:
+  stage: package
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends make git
+    - make smoke
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

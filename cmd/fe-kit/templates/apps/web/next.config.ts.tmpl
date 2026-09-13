@@ -1,0 +1,10 @@
+import type { NextConfig } from 'next';
+
+const config: NextConfig = {
+  // fe-kit ship SOURCE TypeScript, không ship dist. Next phải transpile nó.
+  // Bỏ dòng này thì build chết ở cú pháp TS trong node_modules — lỗi đọc rất
+  // khó hiểu, nên nó nằm ngay đây kèm lý do.
+  transpilePackages: ['fe-kit', '@{{name}}/shared'],
+};
+
+export default config;

@@ -1,0 +1,27 @@
+{
+  "name": "@example/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "start": "electron .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@example/shared": "workspace:*",
+    "fe-kit": "workspace:*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^44.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

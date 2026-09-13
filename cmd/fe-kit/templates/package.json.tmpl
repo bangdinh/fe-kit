@@ -1,0 +1,21 @@
+{
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.4.1",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "oxlint apps shared --deny-warnings",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "verify": "pnpm lint && pnpm type-check && pnpm build && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "oxlint": "^1.82.0",
+    "turbo": "^2.10.12",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,14 @@
+node_modules/
+.turbo/
+dist/
+out/
+release/
+coverage/
+.next/
+# Next tự sinh và GHI ĐÈ file này mỗi lần build (nó trỏ vào .next/types/*).
+next-env.d.ts
+.expo/
+.DS_Store
+.env
+.env.local
+.env.*.local

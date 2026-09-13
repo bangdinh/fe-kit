@@ -1,0 +1,1152 @@
+[
+{
+"severity": "high",
+"category": "trigger",
+"file": "CONTRIBUTING.md",
+"line": 179,
+"claim": "AGENTS.md dòng 3 và CLAUDE.md: \"skill tự kích hoạt theo việc, body chỉ nạp khi dùng — không cần gọi tay\".",
+"evidence": "`ls ~/.claude/projects/<slug-cua-cwd>*/ | wc -l` → cwd `<b2b>`: 19 phiên; cwd `.../camera-ai-platform`: 3 phiên (cả hai còn phiên ngày 2026-09-04). `ls <b2b>/.claude/` → chỉ `settings.local.json`, không có `skills/`, không CLAUDE.md; `git -C .../b2b rev-parse` → \"not a git repository\". Tài liệu chính thức code.claude.com/docs/en/skills: \"Skills in nested .claude/skills/ directories below your starting directory aren't loaded at startup. They load the first time Claude reads or edits a file inside that subdirectory… Until then, those skills don't appear in autocomplete and can't be invoked by name\"; và `permissions.additionalDirectories` \"doesn't load skills\". Repo không có dòng nào hướng dẫn khởi động (`grep -n -i 'chạy claude\\|--add-dir' README.md CONTRIBUTING.md AGENTS.md` → 0).",
+"problem": "Ở 19/22 phiên, 12 skill KHÔNG có trong listing lúc khởi động: prompt đầu kiểu \"tạo nhánh cho RPA-4200\", \"sprint này còn gì\", \"gọi API lấy role\" không có description nào để khớp → không skill nào tự kích hoạt, AGENTS.md cũng không được nạp. Skill chỉ xuất hiện (dưới tên `01.webfirst/camera-ai-platform:jira`…) sau khi Claude tình cờ đọc một file trong repo. Toàn bộ công sức tối ưu description vô hiệu ở cách dùng thực tế.",
+"fix": "Thêm vào CONTRIBUTING.md ngay sau tiêu đề §6 (dòng 179) một mục ngắn: \"Mở Claude Code TỪ GỐC repo (`cd .../camera-ai-platform && claude`). Nếu mở từ thư mục cha `b2b/`, phải thêm `claude --add-dir <b2b>/01.webfirst/camera-ai-platform` — skill trong thư mục con không nạp lúc khởi động (docs/en/skills → Discovery from parent and nested directories).\" Nhắc một dòng tương tự trong AGENTS.md mục \"Skill có sẵn\" (dòng 63)."
+},
+{
+"severity": "medium",
+"category": "trigger",
+"file": ".claude/skills/figma-pipeline/SKILL.md",
+"line": 3,
+"claim": "description: \"Use when any Figma work starts in this repo — a design link, node id, icon/component crawl, flow build, fidelity audit…\" (không có từ tiếng Việt nào).",
+"evidence": "`grep -rho 'bản vẽ' .claude docs AGENTS.md | wc -l` → 321 lần; `grep -l '^description:.*bản vẽ' .claude/skills/*/SKILL.md` → chỉ figma-verify. `grep -c 'Kích hoạt' .claude/skills/figma-*/SKILL.md` → 0/5. Trong khi fe-architecture có \"thêm feature\", \"màn hình\" và ui-antd có \"dựng component\" trong description.",
+"problem": "Câu người dùng gõ thật \"dựng màn Cấu hình camera theo bản vẽ\" / \"làm giống thiết kế\" (không dán link, không gõ chữ Figma) khớp fe-architecture + ui-antd chứ không khớp figma-intent → bỏ qua cổng DỪNG chờ duyệt spec (figma-intent Bước 4) và luật \"mọi con số truy về node\" (figma-pipeline luật 2). Đây đúng là kịch bản \"tự chế\" mà traps.md đã trả giá.",
+"fix": "Dòng 3 figma-pipeline, nối thêm vào cuối description: ` Kích hoạt: \"Figma\", \"bản vẽ\", \"thiết kế\", \"design spec\", \"node id\", \"dựng flow\".` (+~75 ký tự, tổng listing ~3.070 < cap 4.000 của skillListingBudgetFraction 0.02 trên ctx 200k). Không cần sửa 4 skill con vì body figma-pipeline đã điều phối."
+},
+{
+"severity": "medium",
+"category": "trigger",
+"file": ".claude/skills/ui-antd/SKILL.md",
+"line": 3,
+"claim": "Kích hoạt: … \"tree\", … \"token\", \"theme\" …",
+"evidence": "Từ `token` (word) trong docs: auth-sso.md 5, device-rdm.md 7, architecture.md 3 (nghĩa access/refresh token) so với ui-antd.md 12 (design token). AGENTS.md:71 \"Đăng nhập, cookie phiên, refresh, SLO | docs/auth-sso.md\" — auth không có skill. `tree`: access-control body dòng 13–14 (`/tree`), 65–66 (cây tài nguyên lọc theo quyền), livestream body dòng 937 (\"cây thiết bị… không có quyền là node biến mất\"); ui-antd body chỉ nói `Tree draggable`/`titleHeight` (dòng 56, 77–78).",
+"problem": "\"access token hết hạn refresh ở đâu\" → nạp 105 dòng antd, không liên quan, và không có gì trỏ sang docs/auth-sso.md. \"tree thiết bị không hiện camera X\" → nạp ui-antd (styling) thay vì access-control (lọc theo scope) → agent đi sửa antd Tree trong khi nguyên nhân là quyền.",
+"fix": "Dòng 3 ui-antd: thay `\"token\"` bằng `\"design token\"`, thay `\"tree\"` bằng `\"Tree antd\"`. (access-control đã có \"lọc cây theo phạm vi\" ở đầu description nên câu tiếng Việt về cây đã khớp đúng.)"
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "\"Quy ước nhánh/commit/MR của repo này: chưa có skill (`git-flow` nằm trong kế hoạch docs/fe-kit/01-plan-skills.md, mục S4). Hiện commit dùng hai dạng lẫn nhau… — hỏi user nếu cần chọn.\"",
+"evidence": "`ls .claude/skills/git-flow/SKILL.md` → tồn tại (125 dòng); git-flow dòng 41–42 đã chốt: dạng đa số `<type>(<scope>): …` (52/60), `[RPA-xxxx]` chỉ khi user yêu cầu. 01-plan-skills.md dòng 3: \"XONG 11/11 (2026-09-03)\".",
+"problem": "Agent nạp jira (skill hay dùng nhất) được bảo là chưa có luật git và phải hỏi user chọn dạng commit — mâu thuẫn trực tiếp với git-flow, sinh câu hỏi thừa hoặc chọn sai dạng.",
+"fix": "Thay 3 dòng 118–120 bằng: `- Quy ước nhánh/commit/MR: skill \\`git-flow\\` (mặc định \\`<type>(<scope>): …\\`; \\`[RPA-xxxx]\\` đặt trước type chỉ khi user yêu cầu).`"
+},
+{
+"severity": "low",
+"category": "trigger",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 3,
+"claim": "Kích hoạt: \"jira\", \"issue\", \"task\", \"sub-task\", \"ticket\", \"point\", \"worklog\", \"chuyển trạng thái\", hoặc mã RPA-1234.",
+"evidence": "lenh.md dòng 12–15: jira.sh có `story`, `sprints`, `sprint`; `grep -o 'sprint\\|story'` trên dòng description → 0. Ngược lại `task` xuất hiện nghĩa khác: docs/backlog-web-nen-tang.md:121 \"task `lint` khỏi `turbo.json`\", CONTRIBUTING.md:79 nhánh `tuannva4/task`, docs/iam-*-checklist.md:1 \"Checklist theo dõi task\".",
+"problem": "\"sprint 377 có gì / đưa RPA-4200 vào sprint\" chỉ khớp nhờ mã RPA; \"story mới cho IAM\" không có từ nào khớp → bỏ lỡ lệnh skill có sẵn. \"task lint của turbo chạy lâu\" → nạp 121 dòng Jira vô ích.",
+"fix": "Dòng 3: thay `\"task\"` bằng `\"tạo task\"`, thêm `\"story\"`, `\"sprint\"` (net +~15 ký tự)."
+},
+{
+"severity": "low",
+"category": "trigger",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 3,
+"claim": "Kích hoạt: … \"tách file\", \"refactor\", \"kiến trúc\".",
+"evidence": "`grep -n -i refactor .claude/skills/fe-architecture/SKILL.md | grep -v '^3:' | wc -l` → 0 (body không có nội dung nào về refactor). `refactor` là type nhánh và type commit: CONTRIBUTING.md:73, :99; .githooks/commit-msg:20, :57.",
+"problem": "\"refactor hàm parseDate cho gọn\" (logic thuần, không đổi vị trí file) nạp 117 dòng về đặt-code-ở-đâu; \"tạo nhánh refactor/RPA-…\" kéo thêm fe-architecture cạnh git-flow. Từ khoá không được body bảo chứng.",
+"fix": "Dòng 3: xoá `\"refactor\", ` — \"tách file\", \"để code này ở đâu\", \"kiến trúc\" đã phủ đúng phần body có."
+},
+{
+"severity": "low",
+"category": "trigger",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 3,
+"claim": "Kích hoạt: \"gọi API\", \"endpoint\", … \"gateway\", \"BRM\", \"iam-v2\", \"CMI\".",
+"evidence": "Body có bảng client dòng 154–161 và bẫy dòng 175–186 cho: RDM (body 3 lần), media-manager (1), cloud-mngt (1), customer-uac (4), timeout (3) — `grep -c '^description:.*<k>'` mỗi từ → 0. `ls apps/web/src/libs/` → device-api.ts, media-manager.ts, cloud-mngt.ts, cmi.ts, gateway.ts. AGENTS.md:70 chỉ trỏ RDM sang docs/device-rdm.md (không skill).",
+"problem": "\"gọi RDM lấy danh sách device\" hay \"trang treo vì BE không trả\" không có từ nào khớp → agent không thấy luật `timeoutMs()` bắt buộc (dòng 182) và cảnh báo \"Docs Bruno của RDM có chỗ SAI\" (dòng 186) — đúng hai bẫy body nói đã trả giá.",
+"fix": "Dòng 3: thêm `\"RDM\", \"timeout\"` vào danh sách Kích hoạt (+17 ký tự)."
+},
+{
+"severity": "low",
+"category": "trigger",
+"file": ".claude/skills/access-control/SKILL.md",
+"line": 3,
+"claim": "Kích hoạt: … \"can\", \"canOn\", \"requireAction\", \"AccessProfile\".",
+"evidence": "`grep -rwo -i can docs/*.md AGENTS.md | wc -l` → 10 lần là trợ động từ tiếng Anh; listing skill bundled mà agent nhìn thấy cũng đầy \"can\" (\"can be\", \"you can\"). Code: `export function can` ở packages/core/src/entities/access.ts:38 — là hàm thật.",
+"problem": "Từ khoá trần \"can\" khớp mọi câu tiếng Anh có trợ động từ; không tăng độ bắt vì \"canOn\", \"quyền\", \"phân quyền\" đã phủ, chỉ thêm nhiễu.",
+"fix": "Dòng 3: thay `\"can\", \"canOn\"` bằng `\"can()/canOn()\"`."
+},
+{
+"severity": "high",
+"category": "consistency",
+"file": "README.md",
+"line": 19,
+"claim": "README: 7 package (`types api-client core hooks validators config ui`); `@cap/ui — Shared React components (web + desktop)`; `API_URL=http://localhost:3001 # External REST API base URL`; \"Production: thay thế dev session bằng Keycloak / Auth0 / AWS Cognito\"; \"Thêm feature mới\" bước 3–4 đi `packages/api-client/src/client.ts` → `packages/core` use-case.",
+"evidence": "`grep -cE '^    [├└]── [a-z-]+/ +@cap/' README.md` → 7; `ls packages` → api-client auth brm config core hooks logger types ui validators (10). `find packages/ui/src -name '*.tsx' | wc -l` → 0 (AGENTS.md:35 \"KHÔNG xuất component nào\"). AGENTS.md:19 \"`@cap/api-client` mặc định `localhost:3001` — di sản, KHÔNG phải địa chỉ backend\" vs README.md:74. docs/auth-sso.md:6 Keycloak đã là realm thật vs README.md:92. fe-architecture SKILL.md:18-23 \"Mặc định dùng đường A\" (đường B chỉ camera/devices) vs README.md:98-104 dạy đường B.",
+"problem": "README là file dev mới đọc đầu tiên; nó mô tả một repo khác với AGENTS.md/docs/architecture.md (số package, vai trò `ui`, backend, auth, đường dữ liệu). Người mới sẽ dựng feature theo đường đã bị skill cấm mặc định và tin `localhost:3001` là backend.",
+"fix": "README.md: xoá mục \"Kiến trúc\" (dòng 9–47), \"Environment variables\" (70–80), \"Luồng xác thực\" (84–92), \"Thêm feature mới\" (96–104). Thay bằng 3 dòng trỏ: kiến trúc/package → `docs/architecture.md` §2–§3; đường dữ liệu + đặt code → skill `fe-architecture`; auth → `docs/auth-sso.md`. Giữ Quick Start, Lệnh, Tài liệu. Chủ sở hữu duy nhất: `docs/architecture.md`."
+},
+{
+"severity": "high",
+"category": "consistency",
+"file": ".claude/skills/figma-build/SKILL.md",
+"line": 56,
+"claim": "\"3 cổng CI: pnpm lint · pnpm type-check · pnpm test. **KHÔNG chạy `pnpm build`.** Nó KHÔNG phải cổng của skill này… Chỉ build khi người dùng yêu cầu\" (figma-verify:87-90 lặp lại).",
+"evidence": "`grep -nE 'pnpm (--filter web )?build|3 cổng|4 cổng|cả 4 bước' AGENTS.md CONTRIBUTING.md .claude/skills/*/SKILL.md` → AGENTS.md:58 \"CI chạy cả 4 bước\"; CONTRIBUTING.md:165 \"Đụng ranh giới RSC/client… → chạy thêm `ACCESS_MOCK= pnpm --filter web build`\"; fe-architecture:109, git-flow:109 cùng luật; figma-build:55 \"3 cổng\"; figma-verify:80 \"4 cổng đều xanh\". traps.md:16,76 ghi nguyên nhân thật: build dùng chung `apps/web/.next` với `next dev` đang chạy.",
+"problem": "figma-build là skill dựng màn hình — luôn đụng ranh giới RSC/client — nhưng cấm chính bước mà AGENTS/CONTRIBUTING/fe-architecture bắt buộc cho loại thay đổi đó. Agent theo figma-build sẽ báo xong với 3 cổng; agent theo fe-architecture đòi 4. Ngay trong bộ figma cũng lệch \"3 cổng\" (build) vs \"4 cổng\" (verify).",
+"fix": "Chốt một luật ở CONTRIBUTING.md §5 (chủ sở hữu): \"`build` là cổng bắt buộc khi đụng RSC/client/route/prop server→client, nhưng KHÔNG chạy khi `next dev` đang giữ `apps/web/.next` — kiểm `lsof -iTCP:3000 -sTCP:LISTEN` trước; đang chạy thì dừng dev hoặc nhờ user chạy build\". figma-build dòng 55–60 thay bằng: \"Cổng: lint · type-check · test; `build` theo CONTRIBUTING §5 — điều kiện dev server (traps 08-24)\"; figma-verify dòng 85–90 xoá, trỏ cùng chỗ; figma-verify:80 sửa \"4 cổng\" cho khớp."
+},
+{
+"severity": "high",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 113,
+"claim": "\"Không bao giờ: Tự ghi Jira sau khi làm xong việc mà user chưa bảo. Xong việc thì **đề xuất** lệnh.\"",
+"evidence": "`grep -nE 'không hỏi|Phải hỏi|LUÔN xác nhận|Tự ghi Jira' .claude/skills/jira/SKILL.md .claude/skills/git-flow/SKILL.md <gokit>/git-flow/SKILL.md` → jira:41 bảng \"Làm luôn, không hỏi\" gồm `describe`/`summary`/`point`/`transition`/`comment`; git-flow:65 \"Bước 3 — dev xong thì SỬA LẠI subtask (tuân thủ, không hỏi)\"; jira:113 cấm ngược lại; gokit SKILL.md:96 \"LUÔN xác nhận với user trước khi tạo issue/subtask, comment, worklog hay transition\".",
+"problem": "Cùng một file vừa bảo \"làm luôn không hỏi\" vừa bảo \"không bao giờ tự ghi khi user chưa bảo\" cho đúng cùng nhóm lệnh; git-flow lại nghiêng về \"không hỏi\"; bản gokit nghiêng về \"luôn hỏi\". Ghi lên hệ thống ngoài mà luật không rõ → hoặc ghi sai ý user, hoặc hỏi thừa mỗi lượt.",
+"fix": "Chủ sở hữu: bảng \"Ghi lên Jira\" trong jira/SKILL.md dòng 37–48. Sửa dòng 113 thành: \"Tạo issue/sub-task, `worklog`, hay ghi lên ticket người khác khi user chưa bảo (cột 'Phải hỏi trước').\" git-flow:65 đổi \"(tuân thủ, không hỏi)\" → \"(theo bảng 'Ghi lên Jira' của skill `jira`)\". Với gokit SKILL.md:96: hoặc chép đúng bảng này, hoặc thêm câu \"chính sách hỏi/không hỏi do từng repo chốt trong skill `jira` của repo đó\" — quyết định rõ đây là khác cố ý hay lệch."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "CONTRIBUTING.md",
+"line": 99,
+"claim": "`type` ∈ `feat | fix | refactor | test | docs | chore | perf | ci` (git-flow SKILL.md:38 y hệt); dòng 139 \"Hook chặn: sai/thiếu type…\"",
+"evidence": "`grep -n 'TYPES=' .githooks/commit-msg` → :20 `TYPES='feat|fix|refactor|test|docs|chore|perf|ci|build|style|revert'`. Chạy hook thử: `build(deps): nâng antd lên 6.1` → rc=0; `style(iam): format lại file theo prettier` → rc=0; `revert(live): hoàn tác đổi grid` → rc=0.",
+"problem": "Tài liệu nói 8 type và bảo hook chặn type sai, nhưng hook nhận 11. Dev đọc doc tưởng `build:`/`style:`/`revert:` bị chặn; agent chỉ đề xuất 8 type; hai nguồn sẽ tiếp tục phân kỳ khi ai đó sửa một bên.",
+"fix": "Chủ sở hữu: `.githooks/commit-msg` dòng 20 (là thứ chặn thật, CONTRIBUTING:131 đã nói vậy). CONTRIBUTING.md:99 và git-flow/SKILL.md:38 đổi thành: \"`type` ∈ danh sách `TYPES` trong `.githooks/commit-msg` (hiện: feat fix refactor test docs chore perf ci build style revert)\"."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "CONTRIBUTING.md",
+"line": 143,
+"claim": "\"Đo trên 60 commit gần nhất: **57 đạt, 3 không**\"; dòng 121 \"chỉ 2 cái vượt 100\".",
+"evidence": "`grep -nE '5[67] đạt|[34] (không|chặn)' CONTRIBUTING.md .claude/skills/git-flow/references/flow.md` → CONTRIBUTING:143 \"57 đạt, 3 không\"; flow.md:32 \"56 đạt / 4 chặn — 3 sai format + 1 dài 124\". Đo lại hôm nay (`git log --no-merges --format='%s' -60` rồi chạy hook từng dòng): pass=54 fail=6 (3 sai format + 3 dài 124/104/107 ký tự, đếm bằng python `len`); cửa sổ 60 commit đã trượt (0283bfe 08-26 → 693abb2 09-04).",
+"problem": "Hai file nêu cùng một phép đo với hai kết quả khác nhau, và cả hai đã lỗi thời vì cửa sổ \"60 commit gần nhất\" trượt theo thời gian. Số liệu trong CONTRIBUTING được ghi như sự thật nhưng không tái lập được.",
+"fix": "Chủ sở hữu: `flow.md` mục \"Trần độ dài commit — số đo\". CONTRIBUTING.md:143-144 thay bằng \"Backtest hook trên lịch sử: số đo + lệnh ở `.claude/skills/git-flow/references/flow.md`\"; dòng 120-121 bỏ \"chỉ 2 cái vượt 100\". flow.md:27-33 ghi kèm mốc commit (`0283bfe..693abb2`) và lệnh vòng lặp: `git log --no-merges --format='%s' -60 | while IFS= read -r s; do printf '%s\\n' \"$s\" > /tmp/m; bash .githooks/commit-msg /tmp/m >/dev/null 2>&1 || echo \"FAIL: $s\"; done`."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/git-flow/SKILL.md",
+"line": 63,
+"claim": "Bước 2: \"khung message `[RPA-<số>] <type>(<scope>): …`\" (luôn có tiền tố).",
+"evidence": "`grep -nE 'khung message|đi theo dạng đa số|user yêu cầu thì đặt' .claude/skills/git-flow/SKILL.md` → :41-42 \"Tiền tố `[RPA-xxxx]` chỉ 8/60 — nếu user không yêu cầu thì đi theo dạng đa số; user yêu cầu thì đặt…\"; :63 khung mặc định lại có `[RPA-<số>]`. CONTRIBUTING.md:264-265 \"Nếu bắt buộc thì nên có commit-msg hook\" — trong khi `.githooks/commit-msg:21-22` đã có, tiền tố là tuỳ chọn (`(\\[…\\] )?`).",
+"problem": "Trong cùng skill, mục Commit nói mặc định KHÔNG tiền tố, mục Flow nói khung mặc định CÓ tiền tố. CONTRIBUTING §8.2 đề xuất \"nên có hook\" cho thứ hook đã làm — người đọc tưởng chưa có.",
+"fix": "git-flow/SKILL.md:63 → \"khung message `<type>(<scope>): …` — thêm `[RPA-<số>] ` trước type khi user muốn (mục Commit)\". CONTRIBUTING.md:264-265 → \"Hook hiện chấp nhận cả hai (tiền tố tuỳ chọn). Nếu chốt bắt buộc: bỏ `?` sau nhóm `(\\[…\\] )` trong `PATTERN` của `.githooks/commit-msg`; nếu chốt bỏ: xoá nhóm đó.\""
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "\"Quy ước nhánh/commit/MR của repo này: **chưa có skill** (`git-flow` nằm trong kế hoạch `docs/fe-kit/01-plan-skills.md`, mục S4). Hiện commit dùng hai dạng lẫn nhau… hỏi user nếu cần chọn.\"",
+"evidence": "`ls .claude/skills/git-flow/` → SKILL.md references. Cùng file jira/SKILL.md:33 đã viết \"Chi tiết: skill `git-flow`\". progress.md:110 ghi S4 đã xong.",
+"problem": "Mục \"Liên quan\" (nơi agent tìm skill kế tiếp) nói skill không tồn tại và bảo \"hỏi user chọn dạng commit\" — trái với git-flow đã chốt \"đi theo dạng đa số\". Agent sẽ hỏi thừa hoặc bỏ qua git-flow.",
+"fix": "Thay dòng 118-120 bằng: \"- `git-flow` (nhánh, commit, MR) · `CONTRIBUTING.md` (đầy đủ).\""
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 21,
+"claim": "\"BRM-V2 trực tiếp | body thẳng, không envelope | … | `brmClient()` (`@cap/brm`)\"; dòng 8 \"Chi tiết đầy đủ: `docs/fe-kit/notes/gokit-contract.md`\".",
+"evidence": "`grep -nE 'BRM-V2|phương ngữ' .claude/skills/api-contract/SKILL.md docs/fe-kit/notes/gokit-contract.md docs/fe-kit/progress.md` → gokit-contract.md:70 \"BRM-V2 | `{code: 1200, data}`\"; :73 \"3 phương ngữ cũ\"; progress.md:86 \"5 phương ngữ (gokit + 4 legacy)\". Code: `packages/brm/src/client.ts:208` `if (body && typeof body === 'object' && 'data' in body) return body.data` (bóc `{data}` khi có); `packages/api-client/src/client.ts:774` `IAM_OK = 1200` là của `rdi()`.",
+"problem": "Skill và \"nguồn đầy đủ\" của nó mô tả envelope thành công của BRM-V2 khác nhau (body thẳng vs `{code:1200,data}`); code thật là \"`{data}` được bóc, không chấm `code`\". Số phương ngữ cũng lệch 3 vs 4. Agent chọn client/bóc envelope sai theo file nào đọc trước.",
+"fix": "Chủ sở hữu bảng phương ngữ: api-contract/SKILL.md dòng 16–22. Sửa hàng BRM-V2: \"`{data: …}` (hoặc body thẳng) — `@cap/brm` tự bóc `data` nếu có (`client.ts` `'data' in body`), KHÔNG chấm `code`\". gokit-contract.md dòng 65–73: xoá bảng, thay bằng \"Bảng phương ngữ legacy đang gọi: skill `api-contract`\"."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "docs/tech-debt.md",
+"line": 32,
+"claim": "\"`packages/api-client/package.json` có `@trpc/client` + `@trpc/server` trong `dependencies` nhưng không import ở đâu… dead dependency, có thể gỡ an toàn.\"",
+"evidence": "`grep -rn trpc --include=package.json . | grep -v node_modules` → (rỗng). docs/architecture.md:14-15 lệnh grep `\"@trpc/server\"` trong package.json → \"rỗng\" (chạy lại: rc=1, không khớp). AGENTS.md:9 \"không tRPC server\".",
+"problem": "tech-debt nói còn dependency mà architecture/AGENTS khẳng định (và đo được) không còn. Người đọc tech-debt đi gỡ thứ không tồn tại hoặc nghi phép đo của architecture.",
+"fix": "docs/tech-debt.md: xoá bullet dòng 32 (hoặc đổi thành \"~~…~~ ĐÃ GỠ — kiểm: `grep -rn trpc --include=package.json . | grep -v node_modules` → rỗng\")."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "docs/ui-antd.md",
+"line": 144,
+"claim": "\"Chuyển động đi theo `references/chuyen-dong.md`\"",
+"evidence": "`grep -n 'references/chuyen-dong' docs/ui-antd.md .claude/skills/ui-antd/SKILL.md` → docs/ui-antd.md:144 đường tương đối; `ls docs/references` → No such file or directory. Đường thật: `.claude/skills/figma-build/references/chuyen-dong.md` (ui-antd/SKILL.md:66 ghi đúng). traps.md:75 ghi ca 08-24 mất toàn bộ chuyển động vì file bảng \"chỉ thẳng mà không mở\".",
+"problem": "Link chết trong doc \"nguồn chân lý đầy đủ\" (đoạn cắt từ AGENTS.md sang, đường tương đối không đổi theo). Agent không mở được bảng nhịp → lặp đúng bẫy 08-24.",
+"fix": "docs/ui-antd.md:144 → \"`.claude/skills/figma-build/references/chuyen-dong.md`\"."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/figma-pipeline/references/pages/iam.md",
+"line": 18,
+"claim": "\"Feature module: `apps/web/src/features/authz/` (`groups-accounts/`, `roles/`, `members/`, `structure/`)\"; iam-password.md:4-5 \"route `password-policy/` (MỚI — chưa có)… `features/authz/password/` (chưa có)\", :13 \"Spec DUYỆT, CHƯA build\".",
+"evidence": "`ls apps/web/src/features` → access alerts auth camera company devices events iam live places playback search video (13, không có `authz`); `ls apps/web/src/features/authz` → No such file. `find … -iname '*PasswordPolicy*'` → `features/iam/password/PasswordPolicyPageClient.tsx`, `PasswordPolicyForm.tsx`; `GroupsAccountsPageClient.tsx`, `RolesPageClient.tsx` nằm dưới `features/iam/`. `ls app/[locale]/(dashboard)` có `password-policy`. docs/architecture.md:97,108 kê 13 feature gồm `iam`.",
+"problem": "Bảng ánh xạ Figma↔repo (loại B — \"tin tới khi design đổi\") trỏ thư mục đã đổi tên; figma-build/verify grep `features/authz` → 0 kết quả rồi khai file mới trùng chức năng. Trạng thái \"chưa có/CHƯA build\" của Password sai so với repo.",
+"fix": "`sed -i '' 's#features/authz/#features/iam/#g' .claude/skills/figma-pipeline/references/pages/iam.md .claude/skills/figma-pipeline/references/pages/iam-password.md`. iam-password.md:4-5 bỏ \"(route MỚI — chưa có)\"/\"(chưa có)\"; dòng 13 cột Trạng thái → \"Đã build (`features/iam/password/`), verify: xem `docs/design-specs/iam-password-policy/coverage.md` nếu có\" kèm ngày. Không xoá dòng loại C."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "b2b-gokit/.claude/skills/git-flow/SKILL.md",
+"line": 101,
+"claim": "gokit: chữ ký `*Người tạo:* <username>`, \"nhánh = `git branch --show-current`\"; :87 ví dụ `transition B2B-123 \"In Review\"`; :108 \"Gợi ý transition… checkout→In Progress, tạo MR→In Review\".",
+"evidence": "`grep -nE 'show-current|Người tạo' <repo>/jira/references/chu-ky.md <gokit>/SKILL.md` → chu-ky.md:7 \"`git branch --show-current` là nguồn sai phổ biến nhất\" (ca RPA-4210, chu-ky.md:15-18); gokit:101 vẫn dạy đúng cách đó; chu-ky.md:3 dùng `<email>`, gokit dùng `<username>` (cùng lấy từ `whoami`). gokit:93-95 tự nói \"không chắc có In Progress/In Review\" nhưng :87 và :108 vẫn nêu tên đó. progress.md:193-194 \"Đã sửa 6 chỗ\" chỉ trong repo này.",
+"problem": "Hai bản skill dùng chung một script nhưng bài học đã trả giá (Branch Name = nhánh chứa commit; transition đọc, không đoán) chỉ vào bản camera-ai-platform. Bản gokit tự mâu thuẫn (dòng 87/108 vs 93-95). Ai làm ở gokit sẽ ghi chữ ký sai kiểu RPA-4210.",
+"fix": "gokit SKILL.md:101 đổi \"nhánh = `git branch --show-current`\" → \"nhánh = nhánh CHỨA commit của việc (khi chưa tạo nhánh: ghi tên nhánh sắp tạo) — xem `chu-ky.md` của repo camera-ai-platform\"; `<username>` → `<email>`. Dòng 87: `\"In Review\"` → `\"<tên lấy từ transitions>\"`. Dòng 108: xoá, hoặc thêm \"(mapping riêng của project B2B — kiểm bằng `transitions` trước)\". Chủ sở hữu bài học dùng chung: `camera-ai-platform/.claude/skills/jira/references/chu-ky.md`; gokit chỉ trỏ."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": ".claude/skills/jira/jira.sh",
+"line": 21,
+"claim": "\"Nguồn gốc: b2b-gokit/.claude/skills/git-flow/jira.sh — bản sao. Sửa bên nào thì sync bên kia.\" (jira/SKILL.md:117 lặp lại)",
+"evidence": "`diff <(sed 's/git-flow\\/jira.sh/X/' <gokit>/jira.sh) <(sed 's/jira\\/jira.sh/X/' .claude/skills/jira/jira.sh)` → 5 hunk, toàn comment: dòng 11 \"(tuỳ chọn)\" vs \"(repo này: RPA)\"; 21-22 header \"Nguồn gốc\" chỉ có ở repo này; 102-105 lời chú `|| true` khác câu; 140/142 ví dụ component `NewCoreFit, TechDebt-FRT-Ops` chỉ ở repo này; 148/150 \"Xem sprint id\" vs \"Xem sprint\". `md5 -q` → 71a99b29… vs bb8d168c…; `wc -l` 186 vs 188. Phần code thực thi giống nhau.",
+"problem": "Hai bản đã lệch ở comment ngay sau khi port, không có cách kiểm sync nào ngoài đọc tay; comment mang dữ liệu riêng repo (RPA, tên component) nằm trong script nên bản gokit không thể nhận nguyên bản này.",
+"fix": "Chủ sở hữu: gokit `jira.sh`. Repo này: xoá dòng 11 \"(repo này: RPA)\" → giữ \"(tuỳ chọn)\", dòng 142 bỏ ví dụ component (đưa sang `references/jira-project.md`, đã có sẵn), dòng 104-105/150 chép nguyên câu của gokit; chỉ giữ khác biệt ở dòng 19 (alias path) và 21-22 (header nguồn gốc). Thêm vào jira/SKILL.md mục Liên quan lệnh kiểm: `diff <(sed 's#git-flow/jira.sh#J#' ../../b2b-gokit/.claude/skills/git-flow/jira.sh) <(sed 's#jira/jira.sh#J#' .claude/skills/jira/jira.sh)` — chỉ được ra hunk header."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 26,
+"claim": "\"Đủ 14 lệnh (gồm `story`, `sprint`, `sprints`, `worklog`, `summary`, `task`, `me`, `whoami`): `references/lenh.md`\"",
+"evidence": "`grep -cE '^  [a-z]+\\)' .claude/skills/jira/jira.sh` → 16 (me whoami key view comment summary point describe task story sprint sprints subtask worklog transitions transition); `grep -cE 'jira.sh +[a-z]+' references/lenh.md` → 16; khối lệnh SKILL dòng 16-23 có 8 + 8 nêu thêm = 16.",
+"problem": "Con số sai ngay trong file; ai đối chiếu với lenh.md sẽ nghĩ thiếu/thừa 2 lệnh.",
+"fix": "Dòng 26 → \"Đủ 16 lệnh (8 ở trên + `story` `sprint` `sprints` `worklog` `summary` `task` `me` `whoami`): `references/lenh.md`\"."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 105,
+"claim": "\"Hướng dẫn cho người: `CONTRIBUTING.md` §6; theo OS: `references/jira-project.md`.\"",
+"evidence": "`grep -nciE 'windows|wsl|ubuntu|macos' .claude/skills/jira/references/jira-project.md CONTRIBUTING.md` → jira-project.md:0, CONTRIBUTING.md:8 (bảng OS ở CONTRIBUTING.md:204-217).",
+"problem": "Trỏ sai file cho phần theo OS; jira-project.md chỉ có board/transition/cài lần đầu chung.",
+"fix": "Dòng 105 → \"Hướng dẫn cho người + lưu ý theo OS (macOS/Linux/Windows): `CONTRIBUTING.md` §6.\" Bỏ \"theo OS: `references/jira-project.md`\"."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/ui-antd.md",
+"line": 148,
+"claim": "\"Ba cái bẫy đã gặp thật khi chuyển `CreateViewWizard` (2026-08-26):\"",
+"evidence": "`awk` đếm bullet `- **` sau dòng 148 tới heading kế → bullets=5. ui-antd/SKILL.md:84 \"Năm bẫy đã gặp thật\" (5 bullet).",
+"problem": "Doc đầy đủ nói 3, skill nói 5, thực đếm 5 — người đọc doc bỏ qua 2 bẫy cuối (tấm chắn nuốt click, `border` giật layout).",
+"fix": "docs/ui-antd.md:148 \"Ba\" → \"Năm\"."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "docs/ui-antd.md",
+"line": 12,
+"claim": "Dòng 6-8 và 12-15 cùng nói \"`packages/ui` không xuất component nào… 'UI kit' = antd v6 đã theme hoá. Không hardcode hex\".",
+"evidence": "`sed -n '6,8p;12,15p' docs/ui-antd.md` — hai đoạn cùng nội dung, đoạn hai thêm chi tiết `/ui-kit`.",
+"problem": "Lặp trong 10 dòng đầu của nguồn chân lý; khi sửa một đoạn (vd số component) đoạn kia lệch.",
+"fix": "Xoá dòng 6-8; giữ đoạn 12-15 và chuyển câu \"regenerate token: xem `packages/ui/docs/design-tokens.md`\" xuống cuối đoạn đó."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "docs/auth-sso.md",
+"line": 10,
+"claim": "H1 \"# Auth — SSO OIDC/Keycloak (web)\" + quote \"Nguồn chân lý đầy đủ. Code: `packages/auth/`…\" xuất hiện hai lần.",
+"evidence": "`grep -nE '^# |Nguồn chân lý' docs/auth-sso.md` → :1, :3, :10, :12 — hai H1, hai quote gần trùng (\"OIDC thuần\" vs \"thuần OIDC\").",
+"problem": "Header dán hai lần khi tách từ AGENTS.md; hai dòng \"Code:\" đã bắt đầu lệch nhau.",
+"fix": "Xoá dòng 10-13 của docs/auth-sso.md."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/access-control.md",
+"line": 63,
+"claim": "\"Menu sider (`layout.tsx`) và cổng vào trang (`requireRoute(key)` ở `page.tsx`) đều đọc từ đó\"",
+"evidence": "`grep -rln DASHBOARD_ROUTES apps/web/src` → `AppShell.tsx`, `ManagementSectionNav.tsx`, 2 page, routes.ts, routes.test.ts — không có `layout.tsx`. `AppShell.tsx:6` comment \"Thay bộ vỏ antd cũ (`Layout.Sider`…)\", :20,:126 dùng `AppNavRail`. Skill access-control:51-53 gọi là \"menu rail\" + `AppNavRail.tsx`.",
+"problem": "Thuật ngữ (\"sider\" vs \"rail\") và file (`layout.tsx` vs `AppShell.tsx`) trong doc đầy đủ khác skill và khác code; grep theo doc ra 0.",
+"fix": "docs/access-control.md:63 → \"Menu rail (`AppShell.tsx` → `AppNavRail`) và cổng vào trang…\"; dùng \"rail\" thống nhất trong file (dòng 68 \"lên menu\" → \"lên rail\")."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/fe-kit/progress.md",
+"line": 135,
+"claim": "\"3 câu ở `CONTRIBUTING.md` §6 (`master`/`develop`, `[RPA-xxxx]`, release)\" (cũng ở dòng 109, 115).",
+"evidence": "`grep -nE '^## ' CONTRIBUTING.md` → §6 = \"Setup Jira\", §8 = \"Chưa thống nhất — cần chốt\". `grep -nE '§[0-9]' docs/fe-kit/progress.md` → 109, 115, 135 đều ghi §6.",
+"problem": "Mục \"Chưa làm / chờ user\" trỏ vào Setup Jira; git-flow/SKILL.md:120 đã trỏ đúng §8.",
+"fix": "progress.md dòng 109, 115, 135: \"§6\" → \"§8\" (thêm ghi chú \"(khi viết là §6)\" nếu muốn giữ tính nhật ký)."
+},
+{
+"severity": "high",
+"category": "redundancy",
+"file": "README.md",
+"line": 9,
+"claim": "§Kiến trúc (L11-27, 7 package), §Nguyên tắc L31 \"mọi data đến từ External REST API qua createApiClient()\", L26 \"@cap/ui — Shared React components\", §Dependency flow L37-47, §Luồng xác thực L88-92 \"loginAction() → set cookie… Production: thay thế dev session bằng Keycloak / Auth0 / AWS Cognito\", §Thêm feature mới L98-104 (bước 3-4 đi api-client → core use-case), L74 `API_URL=http://localhost:3001  # External REST API base URL`",
+"evidence": "`ls packages/` → 10 thư mục (api-client auth brm config core hooks logger types ui validators), README kê 7 (`sed -n 19,27p README.md | grep -c @cap/` → 7, thiếu auth/brm/logger). `find packages/ui/src -name '*.tsx' | wc -l` → 0 (không có component). `grep -c 'keycloak\\|Keycloak\\|realm' apps/web/src/libs/auth.ts` → 7 (Keycloak đã làm, không còn \"dev session\"). AGENTS.md L14-15: đường A 11/13 feature đi `libs/<service>.ts`, đường B (api-client/core) chỉ 2/13; AGENTS.md L19: `localhost:3001` là di sản. Shingle-8 README↔architecture.md chỉ 0% (6/631) → README không phải bản rút của architecture mà là bản AGENTS.md cũ còn sót.",
+"problem": "README là file dev mới mở đầu tiên; nó mô tả kiến trúc 7 package, ui có component, luồng dữ liệu đường B, auth chưa có — trái với AGENTS.md/docs/architecture.md ở ≥5 điểm. Đây đúng là \"bản sao AGENTS.md cũ chưa được dọn\" (progress.md L69-70 chỉ sửa mục Tài liệu của README khi làm W2).",
+"fix": "Cắt README còn Quick Start + Lệnh + Tài liệu: (1) xoá L9-47, thay bằng 2 dòng: \"Kiến trúc 10 package, 2 đường dữ liệu: `docs/architecture.md`. Fact chống-đoán-sai: `AGENTS.md`.\" (2) xoá L84-92, thay: \"Đăng nhập SSO Keycloak (một công ty = một realm): `docs/auth-sso.md`.\" (3) xoá L96-104, thay: \"Thêm feature: skill `fe-architecture` (mặc định đường A: RSC → actions.ts → libs/).\" (4) L72-80: bỏ `API_URL=…3001`, thay bằng \"`APP_ENV=uat|beta|prod` — endpoint resolve ở `packages/config/src/environments.ts` (architecture.md §7); `localhost:3001` là di sản.\""
+},
+{
+"severity": "medium",
+"category": "redundancy",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 11,
+"claim": "L11-26 \"Sự thật phải biết\" (4 fact: backend không ở repo, đường A 11/13 / B 2/13, hooks 0 dòng, core là engine phân quyền); L97-98 \"tiền lệ AGENTS.md ghi sai (D-001)\"; L100-112 \"Trước khi báo xong\" (pnpm lint && pnpm turbo type-check && pnpm turbo test / ACCESS_MOCK= pnpm --filter web build / type-check KHÔNG thay được build)",
+"evidence": "`grep -rln '11/13' AGENTS.md .claude/skills` → AGENTS.md + fe-architecture; `grep -rln 'engine phân quyền'` → cùng 2 file; `grep -n 'D-001' AGENTS.md .claude/skills/fe-architecture/SKILL.md` → AGENTS.md:79 + fe-architecture:98; `grep -rln 'ACCESS_MOCK= pnpm --filter web build' AGENTS.md .claude/skills CONTRIBUTING.md docs/architecture.md` → 6 file (AGENTS, fe-architecture, git-flow, access-control, CONTRIBUTING, architecture); `grep -rlni 'thay được .build.'` → 6 file. Khối lặp trong fe-architecture: L11-26 + L97-98 + L100-112 = 31/117 dòng.",
+"problem": "AGENTS.md nạp vào MỌI prompt (CLAUDE.md `@AGENTS.md`, đo D-005: 1.8k token). Skill body nạp thêm khi kích hoạt → 31 dòng này luôn xuất hiện 2 lần trong context khi fe-architecture chạy; git-flow L106-113 và access-control L83-85 lặp cùng khối lệnh lần 3. Vi phạm tiêu chí tự đặt ở 01-plan-skills.md L74 \"Không lặp nội dung skill khác; chỗ giao nhau thì trỏ\".",
+"fix": "fe-architecture/SKILL.md: thay L11-26 bằng 2 dòng \"Bốn fact nền (backend ngoài repo, đường A mặc định, hooks/React Query = 0 ở web, core = engine phân quyền) đã ở `AGENTS.md` §Năm fact — không lặp. Chỉ đi đường B khi sửa `features/camera` hoặc `features/devices`.\"; xoá L97-98 (đã là luật 1 AGENTS.md); thay L100-112 bằng 1 dòng \"Lệnh kiểm trước khi báo xong: `AGENTS.md` §Lệnh (nhớ `build` khi đụng RSC/client).\" git-flow/SKILL.md L106-113 và access-control/SKILL.md L82-86: giữ dòng `ACCESS_MOCK=multi-role … dev` riêng của access-control, còn khối lint/type-check/build thay bằng cùng câu trỏ AGENTS.md §Lệnh."
+},
+{
+"severity": "medium",
+"category": "redundancy",
+"file": ".claude/skills/livestream/SKILL.md",
+"line": 11,
+"claim": "Skill tự nhận là \"checklist\" (docs/livestream.md L3: \"Nguồn chân lý đầy đủ\"), nhưng Luật 1-4 (L11-86) chép gần nguyên văn docs/livestream.md L6-97",
+"evidence": "Shingle 8 từ: 335/891 (37%) shingle của SKILL.md xuất hiện y nguyên trong docs/livestream.md — cao nhất trong 7 cặp skill↔docs đo được (access-control 6%, ui-antd 15%, git-flow 6%). `wc -l`: skill 105, docs 126; docs chỉ có thêm mục \"Playback: CORS\" (L98-126) và 2 đoạn lý do (L74-77 MultiRTCInstance bản cũ, L85-88).",
+"problem": "Hai bản gần bằng nhau về độ dài và nội dung → sửa một bên quên bên kia là lệch (đã xảy ra với 57/3 vs 56/4 ở git-flow). Docs \"đầy đủ\" không đầy đủ hơn skill nên vai trò \"nguồn chân lý\" là danh nghĩa.",
+"fix": "Giữ luật ở skill, chuyển phần \"vì sao\" về docs: xoá skill L16-25 (3 đoạn giải thích hook-không-component, hai transport không gộp) thay bằng 1 dòng \"Vì sao hook chứ không component, vì sao không gộp transport ở tầng dưới: `docs/livestream.md` §Lõi.\"; xoá skill L67-69 (đoạn RTCPeerConnection gắn vào LiveTile) thay bằng \"Lý do + bản cũ `b2b-fpt-vmsmart` làm thế nào: `docs/livestream.md` §Phiên\". Skill còn ~90 dòng, docs giữ nguyên."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "L117-120 \"Liên quan\": \"Quy ước nhánh/commit/MR của repo này: chưa có skill (`git-flow` nằm trong kế hoạch `docs/fe-kit/01-plan-skills.md`, mục S4). Hiện commit dùng hai dạng lẫn nhau … hỏi user nếu cần chọn.\"",
+"evidence": "`ls .claude/skills/git-flow/SKILL.md` → tồn tại (125 dòng); progress.md L110 ghi S4 đã xong 2026-09-03; git-flow L41-42 đã quy định cách chọn dạng commit (đa số `type(scope)`, `[RPA-xxxx]` chỉ khi user yêu cầu). AGENTS.md L64 liệt kê `git-flow` là skill có sẵn.",
+"problem": "Agent nạp skill jira sẽ nói với user \"chưa có skill git-flow\" và tự hỏi chọn dạng commit — trái với luật đã chốt ở git-flow, và trỏ tới kế hoạch đã hoàn tất.",
+"fix": "Thay L117-120 bằng: \"- Script là **bản sao** của `b2b-gokit/.claude/skills/git-flow/jira.sh` — sửa bên nào sync bên kia.\\n- Nhánh/commit/MR: skill `git-flow` (dạng commit mặc định `type(scope): …`, `[RPA-xxxx]` chỉ khi user yêu cầu).\""
+},
+{
+"severity": "medium",
+"category": "redundancy",
+"file": ".claude/skills/jira/references/jira-project.md",
+"line": 34,
+"claim": "§\"Cài lần đầu\" L34-46 (cp .jira.env.example, tạo PAT, kiểm `jira.sh me`); jira/SKILL.md L104-105: \"Hướng dẫn cho người: `CONTRIBUTING.md` §6; theo OS: `references/jira-project.md`\"",
+"evidence": "`grep -c 'Windows\\|WSL\\|macOS\\|Git Bash' .claude/skills/jira/references/jira-project.md` → 0 — bảng theo OS thật nằm ở CONTRIBUTING.md L204-217. `grep -rn 'cp .jira.env.example'` → CONTRIBUTING.md:191, :202 và jira-project.md:43 cùng lệnh. Cùng nội dung cài đặt ở 4 chỗ: CONTRIBUTING §6 (`awk 'NR>=179&&NR<=245' | wc -l` → 67 dòng), jira.sh header L5-19, jira-project.md L34-46 (13 dòng), .jira.env.example L1-3.",
+"problem": "Pointer \"theo OS\" trỏ sai file → agent mở jira-project.md tìm không thấy. Bản thân jira-project.md tự nhận là \"dữ liệu đo được của project RPA\" nhưng chứa hướng dẫn cài đặt lặp CONTRIBUTING.",
+"fix": "jira-project.md: xoá L34-46, thay bằng 1 dòng \"Cài lần đầu (token, theo OS, alias): `CONTRIBUTING.md` §6. Agent không ghi token hộ.\" jira/SKILL.md L104-105 sửa thành: \"Chưa có token thì script báo `Chưa set FCAM_JIRA_PAT`. Hướng dẫn cài (kể cả theo OS): `CONTRIBUTING.md` §6. **Agent không ghi token hộ.**\""
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": "CONTRIBUTING.md",
+"line": 143,
+"claim": "CONTRIBUTING L143-144: \"Đo trên 60 commit gần nhất: **57 đạt, 3 không**\" và L121 \"chỉ 2 cái vượt 100\"; git-flow/references/flow.md L32-33: \"Backtest hook trên 60 commit đó: **56 đạt / 4 chặn** — 3 sai format … và 1 dài 124 ký tự\"",
+"evidence": "`grep -rn '57 đạt\\|56 đạt' CONTRIBUTING.md .claude/skills` → CONTRIBUTING.md:143 (57/3) vs flow.md:32 (56/4). Cùng phép đo, cùng ngày 2026-09-03, hai kết quả. Chạy lại hôm nay: `git log --no-merges --format=%s -60` rồi `bash .githooks/commit-msg` từng dòng → pass=54 fail=6 (3 sai format + 3 subject >100 ký tự đo bằng python len: 124, 104, 107); cửa sổ lệch 1 commit so với 09-03 (`git log --format=%ci -60 | awk '$1>\"2026-09-03\"' | wc -l` → 1) nên không so thẳng được, nhưng 2 số ghi sẵn đã mâu thuẫn với nhau và cả hai đều không tái lập.",
+"problem": "Số đo nhân bản ở 2 file (cộng thêm `p50 69 / p90 84` ở 4 chỗ: CONTRIBUTING:121, commit-msg:70, flow.md:29, decisions.md:123) lệch nhau ngay lúc viết. Người đọc không biết tin bản nào; số hết hạn sau mỗi commit.",
+"fix": "Giữ số đo ở đúng một chỗ là flow.md §\"Trần độ dài commit\" (kèm lệnh đo lại: `git log --no-merges --format=%s -60 > /tmp/s; while read -r m; do printf '%s\\n' \"$m\" > /tmp/m; bash .githooks/commit-msg /tmp/m >/dev/null 2>&1 && echo ok || echo FAIL; done < /tmp/s | sort | uniq -c`), sửa số thành kết quả chạy mới nhất. CONTRIBUTING.md: xoá L143-144, thay bằng \"Backtest hook trên 60 commit gần nhất + cách đo lại: `.claude/skills/git-flow/references/flow.md`.\"; L120-121 bỏ cụm \"Đo 60 commit gần nhất: p50 69, p90 84, chỉ 2 cái vượt 100 — và cả hai đều là commit nhồi nhiều việc\", giữ luật ≤72 nhắc / 100 chặn. git-flow/SKILL.md L41-42 bỏ \"(52/60)\", \"chỉ 8/60\" → skill xuống ≤120 dòng (hiện 125, tiêu chí 01-plan-skills.md L71)."
+},
+{
+"severity": "medium",
+"category": "clarity",
+"file": ".claude/skills/figma-pipeline/references/traps.md",
+"line": 70,
+"claim": "Bảng \"Bẫy đã trả giá\" một bảng liên tục từ L6",
+"evidence": "`awk 'NR==70{print length($0)}' traps.md` → 0 (dòng trống); L71 bắt đầu `| 08-24 | Nghiệm thu form **Server Act…`; `grep -c '^| Ngày' traps.md` → 1 (chỉ có 1 header). 29 dòng L71-99 (`sed -n 71,99p | grep -c '^| 0'` → 29) nằm sau dòng trống, không có header/separator riêng.",
+"problem": "Markdown ngắt bảng tại dòng trống; 29 bẫy mới nhất (08-24 → 08-27, gồm cả 2 lần `pnpm build` phá dev server) render thành văn bản thô có dấu `|`, không phải bảng — người đọc trên GitLab không thấy cột. Agent đọc raw thì không sao, nhưng file này là \"sổ ghi nợ\" cho cả người.",
+"fix": "Xoá dòng 70 (dòng trống) của `.claude/skills/figma-pipeline/references/traps.md` để 29 hàng nối lại vào bảng có header ở L6-7. Kiểm: `grep -c '^$' traps.md` giữa L6 và L99 phải = 0."
+},
+{
+"severity": "medium",
+"category": "redundancy",
+"file": "docs/ui-antd.md",
+"line": 87,
+"claim": "L87-97 \"Bảng gốc của lượt rà (2026-08-14 lượt 1) — giữ để tra lại lý do\" với anchor `antd-theme.ts:428`, `:806`, `:650`, `:274`, `:1075`, `:153`",
+"evidence": "`grep -nE '^\\s+(Pagination|Tree|Tabs|Checkbox|Input|Button): \\{' packages/ui/src/theme/antd-theme.ts` → Button:200 Checkbox:329 Pagination:535 Tabs:800 Tree:1027 Input:1351 — cả 6/6 anchor số dòng đều chết (doc ghi 153/274/428/650/806/1075). 7 hàng của bảng: 6 hàng đã \"ĐÃ ĐỔI\"/đã đổi và trùng bảng Trước→Sau L46-54; hàng Alert là quyết định \"Giữ\". Trái luật 4 figma-pipeline/SKILL.md L31-32 (\"Trích code bằng symbol, không bằng số dòng\") và bẫy traps 08-18 \"8/50 anchor chết\". Cùng file còn lặp intro: `grep -n 'không xuất component nào' docs/ui-antd.md` → L6 và L12.",
+"problem": "11 dòng lịch sử với 6 anchor sai làm người đọc mở nhầm chỗ trong antd-theme.ts; thông tin còn giá trị duy nhất (Alert giữ vì \"MỘT component DS, HAI kiểu neo\") bị chôn trong bảng đã xong việc.",
+"fix": "docs/ui-antd.md: xoá L87-97; chèn sau bảng L54 một hàng mới `| components/ui/Alert.tsx | (giữ) | — | Giữ: người dùng chốt 2026-08-14 MỘT component DS, HAI kiểu neo (useToast() cấp trang + trong dialog); còn dọn 2 call site <Alert> antd ở CreateCameraForm.tsx / EditDeviceDrawer.tsx |`. Xoá L12-15 (lặp L6-8), giữ lại 1 câu \"(0 file `.tsx`; trang `/ui-kit` không nằm trong git, chỉ để soi theme)\" ghép vào L6."
+},
+{
+"severity": "medium",
+"category": "redundancy",
+"file": "docs/auth-sso.md",
+"line": 10,
+"claim": "L10-13 lặp lại H1 \"# Auth — SSO OIDC/Keycloak (web)\" và blockquote \"> Nguồn chân lý đầy đủ. Code: `packages/auth/` (thuần OIDC) + `apps/web/src/libs/` (phiên, cookie).\" đã có ở L1-4",
+"evidence": "`grep -n '^# Auth\\|^> Nguồn chân lý' docs/auth-sso.md` → L1, L3, L10, L12: hai H1 và hai blockquote gần trùng chữ (L3 \"OIDC thuần\" vs L12 \"thuần OIDC\"); file chỉ 46 dòng (`wc -l`).",
+"problem": "Hai tiêu đề cấp 1 trong một file 46 dòng: dấu vết ghép hai mảnh khi cắt từ AGENTS.md (W1) chưa dọn; đoạn L6-8 (một công ty = một realm) bị kẹp giữa hai header nên trông như ghi chú lạc chỗ.",
+"fix": "Xoá L10-14 (H1 thứ hai, blockquote thứ hai và 2 dòng trống) của `docs/auth-sso.md`; giữ L1-8 làm đầu file, khối code L15-20 nối ngay sau L8."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "docs/tech-debt.md",
+"line": 64,
+"claim": "L64-80 \"## Roadmap\" + \"Legend: ✅ đã xong\" + hộp ASCII PHASE 0; AGENTS.md L73 gọi file này là \"Nợ kỹ thuật, roadmap\"; L3 và L6 cùng nói \"đừng sửa mà không hỏi trước\"",
+"evidence": "`awk 'NR>=64&&NR<=80' docs/tech-debt.md | wc -l` → 17 dòng; `grep -c PHASE` trong khối → 1; 8 dòng ✅ và 0 mục chưa xong; `grep -n Legend` → chỉ một ký hiệu ✅. `grep -n 'không hỏi trước' docs/tech-debt.md` → L3 (blockquote) và L6 (heading) cùng ý.",
+"problem": "\"Roadmap\" chỉ có một phase đã xong toàn bộ → không còn là roadmap, 17 dòng không ai hành động được; heading L6 lặp blockquote L3.",
+"fix": "docs/tech-debt.md: xoá L64-80; L6 đổi thành `## Nợ kỹ thuật đã biết` (bỏ ngoặc lặp). AGENTS.md L73 sửa \"Nợ kỹ thuật, roadmap (đừng tự sửa)\" → \"Nợ kỹ thuật (đừng tự sửa)\"."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/fe-kit/README.md",
+"line": 5,
+"claim": "fe-kit/README.md L5: \"Giai đoạn 1 — chuẩn hoá skill… **(đang làm)**\"; 01-plan-skills.md L37 \"số dòng theo AGENTS.md hiện tại\" với L40-45 \"AGENTS.md 22–99 / 121–213 / 229–384 / 606–776\"; L77-85 \"Câu cần chốt trước khi code\" (3 câu)",
+"evidence": "`grep -n 'XONG\\|HOÀN TẤT' docs/fe-kit/01-plan-skills.md docs/fe-kit/progress.md` → 01-plan L3 \"XONG 11/11 (2026-09-03)\", progress L120 \"HOÀN TẤT GIAI ĐOẠN 1\" — README vẫn \"(đang làm)\". `wc -l AGENTS.md` → 85 (bản 777 dòng đã bị thay) nên 4 khoảng dòng L40-45 không còn trỏ được. progress.md L16-21 và L89 cho thấy cả Q1, Q2, Q3 đã chốt (Q3 = \"D-Q3: chỉ mô tả hợp đồng\").",
+"problem": "README của folder nói việc đang làm trong khi kế hoạch và log nói đã xong; kế hoạch giữ 3 câu hỏi mở đã có đáp án và 4 tham chiếu dòng chết → người mới đọc fe-kit/ sẽ tưởng còn việc chưa quyết.",
+"fix": "fe-kit/README.md L5: \"(đang làm)\" → \"(xong 2026-09-03 — xem `progress.md`)\". 01-plan-skills.md L3 thêm \"Tài liệu lịch sử; số dòng AGENTS.md ở bảng dưới là của bản 777 dòng trước W1.\"; L77-85 thay bằng 3 dòng kết quả: \"1. Ngôn ngữ: tiếng Việt (chốt 09-03). 2. SKILL.md gốc: đã xoá (W2). 3. Phạm vi api-contract: chỉ hợp đồng (D-Q3).\""
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 28,
+"claim": "L28-46 \"Chuẩn gokit — viết code mới thì nhắm vào đây\" (2 envelope, problem+json, 15 mã lỗi, limit/cursor/sort, danh sách header chưa có), trong khi L8 đã trỏ \"Chi tiết đầy đủ: docs/fe-kit/notes/gokit-contract.md\" và L18 ghi client gokit \"*chưa có service nào ở FE*\"",
+"evidence": "Shingle 8 từ của L28-46 trùng gokit-contract.md: 38/160 (23%); 15 mã lỗi `NOT_FOUND … INTERNAL_ERROR` y nguyên ở cả hai (skill L39-42, note L31-33); `wc -l` gokit-contract.md → 73 dòng, skill chép ~19 dòng trong đó.",
+"problem": "19/95 dòng skill mô tả một hợp đồng chưa có service nào ở FE dùng (chính skill nói), lại đã có file references đầy đủ — nạp mỗi lần kích hoạt \"gọi API\" mà không phục vụ việc đang làm.",
+"fix": "Rút L28-46 còn 4 dòng: tiêu đề + 2 dòng ví dụ `{\"data\":…}` / problem+json + \"Đầy đủ (15 mã lỗi, query list, header chưa có, OpenAPI là nguồn chân lý): `docs/fe-kit/notes/gokit-contract.md` — đọc khi service đích là gokit.\""
+},
+{
+"severity": "low",
+"category": "script",
+"file": ".claude/skills/jira/jira.sh",
+"line": 186,
+"claim": "`\"\"|-h|--help|help) sed -n '2,32p' \"$0\"` — in phần header hướng dẫn",
+"evidence": "`bash .claude/skills/jira/jira.sh help | tail -9` → 7 dòng cuối là mã shell: `set -euo pipefail`, `# Nạp cấu hình…`, `if [ -z \"${FCAM_JIRA_PAT:-}\" ]; then`, `set -a`, `[ -f ./.jira.env ] && . ./.jira.env`, `[ -z … ] && [ -f \"$HOME/.jira.env\" ] && . …`. Header comment kết thúc ở L25; `diff` với bản gokit cho thấy bản này thêm 2 dòng L21-22 nhưng range sed giữ nguyên '2,32p' (gokit L184 cũng '2,32p' và cũng in code).",
+"problem": "`jira help` (lệnh đầu tiên người mới gõ) in kèm 7 dòng source code — nhiễu, trông như lỗi script.",
+"fix": "jira.sh L186: `sed -n '2,32p'` → `sed -n '2,25p'`. Đồng bộ sang b2b-gokit/.claude/skills/git-flow/jira.sh (ở đó header hết ở L23 → `'2,23p'`) theo luật \"sửa bên nào sync bên kia\" (chỉ đề xuất, không tự sửa gokit)."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 26,
+"claim": "\"Đủ 14 lệnh (gồm `story`, `sprint`, `sprints`, `worklog`, `summary`, `task`, `me`, `whoami`): `references/lenh.md`\"",
+"evidence": "`grep -cE '^  [a-z]+\\)' .claude/skills/jira/jira.sh` → 16 (me whoami key view comment summary point describe task story sprint sprints subtask worklog transitions transition); `grep -c 'jira.sh ' references/lenh.md` → 16 dòng. Cùng file còn lặp nội bộ: `grep -n 'summary\\`: một dòng' SKILL.md` → L76 và L86 cùng câu \"summary: một dòng… kèm kết quả nếu có\".",
+"problem": "Số lệnh sai (14 vs 16) và mục \"Title vs description\" (L84-97) mở đầu bằng câu đã có ở \"Viết NGẮN\" (L72-82) → 2 mục nói cùng việc; file 121 dòng vượt tiêu chí 120 đúng bằng phần lặp.",
+"fix": "L26: \"Đủ 14 lệnh\" → \"Đủ 16 lệnh\". Xoá L86-87 (2 gạch đầu dòng lặp), đổi heading L84 \"## Title vs description\" thành \"## Chữ ký description\" chỉ giữ L88-97."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": ".claude/skills/ui-antd/SKILL.md",
+"line": 37,
+"claim": "L37-38: \"Page-Header/Default — … Composite: Breadcrumb 18 → gap 16 → hàng tiêu đề 32 → gap 16 → Group-Tabs 52; nút thao tác cao **28** rộng 64, cách nhau 8.\"",
+"evidence": "`grep -rn 'Breadcrumb 18' .claude/skills/ui-antd/SKILL.md docs/ui-antd.md` → SKILL.md:37 và docs/ui-antd.md:107 cùng chuỗi số đo (docs còn kèm node `115:17805`). figma-pipeline/SKILL.md L28-30 luật 3: \"SKILL.md chỉ chứa luật không hết hạn… số đo… chỉ nằm ở references/… đóng dấu ngày\".",
+"problem": "Số đo từ bản vẽ (hết hạn khi design đổi) nằm trong SKILL.md không có ngày, không có node id; bản có node id đã ở docs. Hai chỗ → design đổi thì skill lệch trước.",
+"fix": "ui-antd/SKILL.md L37-38 → \"- `Page-Header/Default` — antd bỏ PageHeader từ v5, dựng composite ở `components/layout/`; số đo + node: `docs/ui-antd.md` §Ba thứ antd không có.\""
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "CLAUDE.md",
+"line": 5,
+"claim": "L5-6: \"Chi tiết theo chủ đề ở `docs/`; luật để hành động ở `.claude/skills/` (skill tự kích hoạt theo việc, body chỉ nạp khi dùng).\"",
+"evidence": "`grep -rn 'body chỉ nạp khi dùng' AGENTS.md CLAUDE.md` → AGENTS.md:4, AGENTS.md:62, CLAUDE.md:6 — cùng câu 3 lần trong 2 file đều nạp mọi prompt (CLAUDE.md import `@AGENTS.md` ở L1).",
+"problem": "CLAUDE.md nạp mọi prompt; 2 dòng lặp đúng câu L3-4 của AGENTS.md vừa import ngay trên. Thông tin riêng cho Claude chỉ là \"sửa ở AGENTS.md, đừng nhân bản vào đây\".",
+"fix": "CLAUDE.md L5-7 rút còn: \"`AGENTS.md` ở trên dùng chung cho mọi agent (Cursor, Codex, Copilot) — sửa ở đó, đừng nhân bản vào đây.\" AGENTS.md L62 bỏ cụm \", body chỉ nạp khi dùng — không cần gọi tay\" (đã nói ở L4)."
+},
+{
+"severity": "low",
+"category": "clarity",
+"file": "docs/device-rdm.md",
+"line": 6,
+"claim": "Cấu trúc heading: L1 `#`, L6 `###`, L53 `### RDM: ba luật dễ trả giá`, L85 `##`; docs/livestream.md tương tự: L6/L41/L65 `###` rồi L98 `##`. device-rdm L3 và L6 cùng \"docs Bruno có chỗ SAI\"",
+"evidence": "`grep -n '^#' docs/device-rdm.md` → 1:#, 6:###, 53:###, 85:## ; `grep -n '^#' docs/livestream.md` → 1:#, 6:###, 41:###, 65:###, 98:##. `sed -n 53,84p docs/device-rdm.md | grep -c '^\\*\\*'` → 4 luật in đậm (X-Device-Ids, cascade, bulkRemove, hai chặng) + 2 đoạn nữa, heading nói \"ba\". progress.md L49-58 xác nhận hai file này là mảnh cắt từ AGENTS.md (W1).",
+"problem": "Cấp `###` xuất hiện trước `##` là dấu vết cắt-dán từ AGENTS.md cũ chưa re-level (đúng dạng \"bản sao AGENTS.md cũ chưa dọn\"); mục lục tự sinh trên GitLab lệch cấp; \"ba luật\" nhưng 4-6 luật.",
+"fix": "device-rdm.md: L6, L53 `###` → `##`; L53 đổi \"RDM: ba luật dễ trả giá\" → \"Luật dễ trả giá\"; L6 rút thành \"## Xác thực: Bearer của người dùng, không X-Gateway-Token\" (bỏ lặp câu L3). livestream.md: L6, L41, L65 `###` → `##`."
+},
+{
+"severity": "high",
+"category": "script",
+"file": ".claude/skills/figma-build/SKILL.md",
+"line": 37,
+"claim": "Cổng \"Số cắm tay\": pipeline grep | grep -v | `awk -F: 'NR==FNR{next} {print}'` — \"mỗi dòng in ra phải có node id\"",
+"evidence": "Chạy đúng pipeline trên apps/web/src/features/video/player/PtzPad.tsx: step1=10 dòng, step2 (sau grep -v)=8 dòng, step3 (thêm awk)=0 dòng. Kiểm lại phép đo: `printf 'a\\nb\\nc\\n' | awk -F: 'NR==FNR{next} {print}' | wc -l` → 0. Với một input duy nhất NR==FNR luôn đúng nên awk `next` mọi dòng.",
+"problem": "Cổng luôn in rỗng → agent nào chạy cũng \"đạt\" dù file đầy số cắm tay (PtzPad.tsx có 8 dòng như `left: 8`, `right: 8`). Cổng tự kiểm vô hiệu, đúng loại lỗi đo mà AGENTS.md luật 1 cảnh báo.",
+"fix": "Xoá dòng 37 và dấu `\\` cuối dòng 36. Để giữ ý \"node id ở dòng liền trên\", đổi lệnh thành `grep -nB1 -E \"(width|…|flexBasis)[A-Za-z]*: ?['\\\"]?[0-9]\" <file> | grep -vE \"container\\.|iconSize|radius\\.|spacing\\.|textStyles|shadows\\.|: ?['\\\"]?(0|1)[,}]|//.*[0-9]+:[0-9]+\"` và ghi: \"cặp dòng còn lại mà dòng `N-` phía trên không có node id thì phải sửa\". Sau khi sửa, chạy trên PtzPad.tsx phải ra >0 dòng (hiện 8) để chứng minh cổng còn cắn."
+},
+{
+"severity": "high",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 113,
+"claim": "Không bao giờ: \"Tự ghi Jira sau khi làm xong việc mà user chưa bảo. Xong việc thì đề xuất lệnh.\"",
+"evidence": "Cùng file dòng 41-46 bảng \"Làm luôn, không hỏi\": `describe`/`summary`/`point`/`transition`/`comment`. git-flow/SKILL.md:65 \"Bước 3 — dev xong thì SỬA LẠI subtask (tuân thủ, không hỏi)\". git-flow/references/flow.md:21-25 \"đây là bước tuân thủ, làm không hỏi xin phép\". CONTRIBUTING.md:60-62 \"Xong việc thì sửa lại subtask … rồi mới commit\".",
+"problem": "Bốn chỗ bảo ghi Jira không cần hỏi, một chỗ (dòng 113) cấm. Hai agent đọc cùng skill sẽ hành xử ngược nhau: một tự `describe`/`transition`, một chỉ đề xuất lệnh. Đây là side-effect ra hệ thống ngoài nên lệch là nghiêm trọng.",
+"fix": "Sửa dòng 113 thành đúng cột phải của bảng: \"- Tạo issue/sub-task mới, ghi `worklog`, hay ghi lên ticket của người khác khi user chưa bảo. `describe`/`summary`/`point`/`transition`/`comment` trên ticket của việc đang làm thì làm luôn rồi báo lại (bảng trên).\" Nếu team muốn ngược lại (chỉ đề xuất), phải sửa đồng thời bảng 41-46, git-flow:65, flow.md:21-25, CONTRIBUTING §2."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/git-flow/SKILL.md",
+"line": 63,
+"claim": "Bước 2: \"khung message `[RPA-<số>] <type>(<scope>): …`\"; dòng 54 sơ đồ \"commit (mang key)\"",
+"evidence": "Cùng file dòng 41-42: \"Tiền tố `[RPA-xxxx]` chỉ 8/60 — nếu user không yêu cầu thì đi theo dạng đa số\" (dạng đa số ở dòng 35 không có tiền tố). CONTRIBUTING.md §8.2 (dòng 264): \"`[RPA-xxxx]` trong commit — bắt buộc hay tuỳ?\" — chưa chốt. Hook `.githooks/commit-msg:22` nhận cả hai (test: 2 dạng đều exit 0).",
+"problem": "Cùng một skill, mục Commit nói mặc định KHÔNG tiền tố, mục Flow nói khung message CÓ tiền tố. Agent đi theo Flow (ticket → nhánh → commit) sẽ luôn sinh `[RPA-n] …`, agent đọc mục Commit sẽ bỏ — hai kết quả khác nhau cho cùng yêu cầu.",
+"fix": "Dòng 63 đổi thành: \"khung message `<type>(<scope>): …` (thêm tiền tố `[RPA-<số>] ` chỉ khi user yêu cầu — xem mục Commit)\". Dòng 54 bỏ \"(mang key)\". Nếu team chốt bắt buộc key thì sửa ngược ở dòng 41-42 + CONTRIBUTING §8.2 — nhưng phải cùng một hướng trong cả file."
+},
+{
+"severity": "medium",
+"category": "clarity",
+"file": ".claude/skills/git-flow/SKILL.md",
+"line": 98,
+"claim": "\"Không `git commit`, không `git push`, không tạo nhánh khi user chưa bảo … Được phép sửa file trong working tree; biến nó thành commit là việc của user.\"",
+"evidence": "Cùng file dòng 69-70: \"Bước 4 — commit … + `git add` liệt kê đúng file\"; dòng 93-94: \"Việc xong thì commit trên nhánh riêng rồi đề xuất push\"; dòng 102-103: \"Trước khi đụng index: chạy `git status` … Không bao giờ `git add -A` — add đúng file mình sửa\". Bản gốc b2b-gokit/.claude/skills/git-flow/SKILL.md:35 nói rõ: \"Được sửa/stage file; biến thành commit là việc của user\" — bản port bỏ chữ \"stage\".",
+"problem": "Dòng 98 chỉ cho phép \"sửa file\", ba chỗ khác giả định agent tự `git add`; dòng 93-94 đọc như agent tự commit. Agent không biết mình được chạy `git add` hay chỉ đề xuất — hai agent sẽ làm hai kiểu.",
+"fix": "Dòng 98: \"Được phép sửa file và `git add <đúng file mình sửa>`; `git commit`, `git push`, tạo nhánh là việc của user\" (khớp gokit:35). Dòng 70: \"đề xuất `git add <file…>` + `git commit -m` trọn vẹn\". Dòng 93-94: \"Việc xong thì đề xuất commit trên nhánh riêng + push nhánh + tạo MR\"."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "\"Quy ước nhánh/commit/MR của repo này: chưa có skill (`git-flow` nằm trong kế hoạch `docs/fe-kit/01-plan-skills.md`, mục S4) … hỏi user nếu cần chọn.\"",
+"evidence": "`wc -l .claude/skills/git-flow/SKILL.md` → 125. docs/fe-kit/progress.md:94,110: \"## 2026-09-03 (S4 + W4) … **S4** `.claude/skills/git-flow/SKILL.md` (87 dòng)\". git-flow:41-42 đã quy định mặc định (dạng đa số, không hỏi).",
+"problem": "Agent đọc jira skill tin git-flow chưa tồn tại → tự đặt quy ước hoặc hỏi user, trong khi git-flow đã có luật cụ thể. Trỏ sai còn làm agent bỏ qua luật \"không tự commit\" của git-flow.",
+"fix": "Thay dòng 118-120 bằng một dòng: \"- Quy ước nhánh/commit/MR của repo này: skill `git-flow` (dạng message mặc định và khi nào có `[RPA-xxxx]` ghi ở đó).\""
+},
+{
+"severity": "medium",
+"category": "script",
+"file": ".claude/skills/figma-build/SKILL.md",
+"line": 59,
+"claim": "\"kiểm `ss -ltnp | grep :3000` trước\" khi build",
+"evidence": "`which ss` → \"ss not found\" (exit 1); `which lsof` → /usr/sbin/lsof. Môi trường dev: Darwin 25.3.0. figma-verify:87-89 cùng nhắc trap này nhưng không cho lệnh.",
+"problem": "Lệnh không tồn tại trên macOS — agent chạy sẽ lỗi rồi hoặc bỏ bước kiểm, hoặc build đè `.next` của dev server (trap 08-24 đã trả giá 2 lần theo traps.md:76).",
+"fix": "Dòng 59 đổi thành: \"kiểm `lsof -nP -iTCP:3000 -sTCP:LISTEN` (macOS; Linux: `ss -ltnp | grep :3000`) — có dòng trả về là dev server đang chạy, KHÔNG build\"."
+},
+{
+"severity": "medium",
+"category": "clarity",
+"file": ".claude/skills/figma-build/SKILL.md",
+"line": 8,
+"claim": "\"Điều kiện vào: `docs/design-specs/<flow>/spec.md` tồn tại VÀ người dùng đã duyệt.\" Dòng 14: \"Nhận work-list từ `spec-full.md` … tích ☐ mục đó ngay trong file spec\"",
+"evidence": "`ls docs/design-specs/*/`: 13 flow, chỉ 7 có spec-full.md; event-notification, keycloak-auth-journeys, smart-search có spec.md nhưng KHÔNG có spec-full.md; playback/spec-full.md có ☐=0 ☑=0 (không có work-list để tích). description skill nói \"or resuming a partially built flow\".",
+"problem": "Điều kiện vào chỉ đòi spec.md, nhưng vòng làm việc cần spec-full.md có ☐. Với 3 flow trên, một agent đi tiếp bằng spec.md (không work-list → tự chế), agent khác quay về figma-intent. \"file spec\" ở dòng 14 cũng không nói rõ là spec.md hay spec-full.md.",
+"fix": "Dòng 8: \"Điều kiện vào: `spec.md` VÀ `spec-full.md` (có work-list ☐) cùng tồn tại VÀ người dùng đã duyệt. Thiếu `spec-full.md` hoặc không có ô ☐ → về `figma-intent` bước 3 dựng nó, kể cả khi `spec.md` đã có.\" Dòng 14: \"tích ☐ mục đó ngay trong `spec-full.md`\"."
+},
+{
+"severity": "medium",
+"category": "clarity",
+"file": ".claude/skills/figma-intent/SKILL.md",
+"line": 22,
+"claim": "\"Dùng page id trong đó (loại A — grep xác nhận lại trước khi tin)\"; _template.md:6 \"A. Cache … cấm dùng thẳng, grep lại rồi mới dùng\"",
+"evidence": "`grep -n grep` trên pages/*.md: chỉ iam.md:26-31 giải thích cách làm (\"chạy trên dump `$f` của page … f = đường dẫn get_metadata(291:31265) ghi ra khi vượt giới hạn context; `grep -o '<section id=…' \"$f\"`\"). login.md:6, playback.md, _template.md chỉ lặp lại chữ \"grep\" không nói grep cái gì, ở đâu.",
+"problem": "Node id Figma không grep được trong repo; \"grep xác nhận\" chỉ có nghĩa khi đã gọi get_metadata mới và kết quả được ghi ra file. Agent đọc figma-intent + login.md không biết thủ tục → hoặc grep repo (vô nghĩa), hoặc bỏ qua và dùng thẳng cache (đúng điều luật cấm).",
+"fix": "Dòng 21-22 đổi thành: \"(loại A — xác nhận: gọi `get_metadata(<pageId>)` mới; kết quả lớn được MCP ghi ra file `$f`; chạy `grep -c '<nodeId>' \\\"$f\\\"` — 0 dòng = node đã đổi/xoá, không dùng)\". Chép câu này vào `figma-pipeline/references/pages/_template.md:6` thay cho \"grep lại rồi mới dùng\"."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/figma-intent/SKILL.md",
+"line": 66,
+"claim": "Bước 4 — DỪNG: \"Nộp `spec.md` cho người dùng, chờ duyệt … Duyệt xong mới được gọi `figma-build`.\"",
+"evidence": "figma-verify/SKILL.md:12-13: \"Audit việc cũ: chưa có spec → chạy `figma-intent` dựng work-list trước (không cần cổng duyệt — audit không sinh code), rồi quay lại đây.\" `grep -n -i audit .claude/skills/figma-intent/SKILL.md` → chỉ khớp dòng 3 (description), body 0 lần.",
+"problem": "Chế độ audit chỉ có trong description (dùng để trigger), body figma-intent không có nhánh nào cho nó. Agent được figma-verify gọi vào sẽ theo Bước 4: dừng chờ duyệt spec.md, không quay về figma-verify — luồng audit đứt.",
+"fix": "Thêm vào cuối Bước 4: \"Ngoại lệ — được `figma-verify` gọi để audit việc cũ: chỉ dựng `spec-full.md` (work-list + edge + state), KHÔNG chờ duyệt, KHÔNG gọi `figma-build`, trả về `figma-verify`.\""
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/git-flow/SKILL.md",
+"line": 15,
+"claim": "Bảng mở đầu: \"`master` đứng yên từ 2026-07-14, sau `development` 401 commit\"; dòng 17: \"chỉ 8/60 commit có [KEY]\"",
+"evidence": "`git log -1 origin/master --format='%h %ci %s'` → c309c6e 2026-09-04 00:06:39 Merge branch 'feature/RPA-4210-skill-docs' into 'master'. `git rev-list --count origin/master..origin/development` → 1; ngược lại → 1. `git log -60 --format=%s | grep -c '^\\[RPA-'` → 5. CONTRIBUTING.md:262 cũng ghi 401.",
+"problem": "Số liệu đo ngày 2026-09-03 đã sai sau một ngày: master vừa nhận merge từ nhánh feature. Đây là \"điều dễ sai nhất\" đặt ở đầu skill nhưng lại là dữ liệu có hạn dùng — vi phạm chính luật \"luật tách khỏi dữ liệu\" (figma-pipeline luật 3) và khiến agent khẳng định sai khi user hỏi về master.",
+"fix": "Giữ luật (dòng 19: base = development, MR target = development). Chuyển 3 con số (ngày master, 401, 8/60) sang `references/flow.md` kèm ngày đo. Thay ô bảng bằng lệnh đo: `git log -1 --format=%ci origin/master` · `git rev-list --count origin/master..origin/development` · `git log -60 --format=%s | grep -c '^\\[RPA-'` với ghi chú \"đo rồi mới nói\". Sửa CONTRIBUTING §8.1 tương tự."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": ".claude/skills/git-flow/SKILL.md",
+"line": 38,
+"claim": "\"`type` ∈ `feat | fix | refactor | test | docs | chore | perf | ci`\"",
+"evidence": ".githooks/commit-msg:20 `TYPES='feat|fix|refactor|test|docs|chore|perf|ci|build|style|revert'`. Test `style(ui): chỉnh khoảng cách nút thao tác` qua hook → exit 0. CONTRIBUTING.md:99 cũng chỉ liệt 8 type.",
+"problem": "Hook (hàng rào thật) nhận 11 type, skill và CONTRIBUTING nói 8. Agent sẽ từ chối/sửa `style(...)`, `revert(...)` hợp lệ của user, hoặc ngược lại không biết dùng `build`.",
+"fix": "Dòng 38 thêm `| build | style | revert`; sửa CONTRIBUTING.md:99 cùng danh sách. (Hoặc bỏ 3 type khỏi hook:20 — chọn một, nhưng hook là nguồn ép nên sửa doc theo hook.)"
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 26,
+"claim": "\"Đủ 14 lệnh (gồm `story`, `sprint`, `sprints`, `worklog`, `summary`, `task`, `me`, `whoami`)\"",
+"evidence": "`grep -oE '^  [a-z|\"-]+\\)' jira.sh` → 17 nhánh case: me whoami key view comment summary point describe task story sprint sprints subtask worklog transitions transition + help. 8 lệnh ở khối trên + 8 trong ngoặc = 16. references/lenh.md liệt 16 dòng.",
+"problem": "Số đếm sai ngay trong câu trỏ tài liệu đầy đủ; agent đối chiếu sẽ nghi lenh.md thừa lệnh hoặc mất thời gian đếm lại.",
+"fix": "Dòng 26 đổi \"Đủ 14 lệnh\" → \"Đủ 16 lệnh\"."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".claude/skills/ui-antd/SKILL.md",
+"line": 13,
+"claim": "\"35 component đã pin token … trong khối `components:`\" (lặp ở dòng 24 \"nằm trong 35 cái đó\"); dòng 18-19 \"cả `apps/web` + `packages/ui` hiện chỉ có **một** khai báo `transition`\"",
+"evidence": "Đếm key cấp 1 trong khối `components:` (bắt đầu antd-theme.ts:163): 39 (Button Layout Menu … Input Select). AUDIT-2026-08-14-components.md:5 ghi \"36 component sau khi thêm Steps\". `grep -rn transition apps/web/src packages/ui/src --include='*.ts' --include='*.tsx'` lọc bỏ startTransition/useTransition/comment → 31 dòng, ≥8 file (PersonaSwitcher.tsx:53, AlertListPanel.tsx:156, PlaybackControlBar.tsx:119…).",
+"problem": "Hai \"sự thật nền\" đã lệch thực tế; câu \"chỉ có một transition\" là lý do giải thích cho luật antd-first nên agent trích lại sẽ nói sai, và có thể coi mọi `transition` hiện có là vi phạm.",
+"fix": "Dòng 13: bỏ số, thay bằng lệnh đếm `grep -cE '^      [A-Z][A-Za-z]*: *\\{' packages/ui/src/theme/antd-theme.ts` (hiện 39). Dòng 24: \"nằm trong khối đó\". Xoá câu dòng 18-19 từ \"Đó là lý do…\" đến \"…khai báo `transition`\" (giữ ý \"dựng tay = vứt theme\")."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 55,
+"claim": "\"Chỉ dùng route handler … — hiện có 7 cái, đều là auth / chọn công ty / export.\"",
+"evidence": "`find apps/web/src/app/api -name route.ts | wc -l` → 8: auth/{login,callback,refresh,logout}, company/{auto,reset}, device-export, debug/logs.",
+"problem": "Số đếm sai và `debug/logs` không thuộc ba nhóm nêu; agent muốn thêm route handler cho log/debug sẽ tưởng vi phạm luật.",
+"fix": "Dòng 55: \"hiện có 8 (`find apps/web/src/app/api -name route.ts`): auth×4, company×2, device-export, debug/logs\"."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 86,
+"claim": "\"`summary`: một dòng, mô tả NGẮN việc, kèm kết quả nếu có.\"",
+"evidence": "Dòng 76 cùng file: \"`summary`: một dòng, kèm kết quả nếu có.\" Dòng 87 \"Chi tiết → `description`\" lặp dòng 77-79.",
+"problem": "Hai mục liền nhau (\"Viết NGẮN\" và \"Title vs description\") định nghĩa cùng một thứ; khi sửa một chỗ dễ quên chỗ kia và sinh lệch.",
+"fix": "Xoá dòng 86-87; đổi tiêu đề mục dòng 84 thành \"## Chữ ký cuối description\" và giữ từ dòng 88 trở đi."
+},
+{
+"severity": "high",
+"category": "accuracy",
+"file": "docs/architecture.md",
+"line": 66,
+"claim": "Đường A (11/13 feature) RSC page → features/*/actions.ts → libs/<service>.ts; lệnh đo: `grep -l \"@/libs/\\(gateway\\|brm\\|cmi\\|device-api\\|media-manager\\)\" features/*/actions.ts` → 11/13. Lặp ở AGENTS.md:14, .claude/skills/fe-architecture/SKILL.md:18, docs/fe-kit/decisions.md:25.",
+"evidence": "cd apps/web/src && ls features/*/actions.ts → chỉ 6 file (access, auth, camera, company, devices, playback). Chạy đúng lệnh trong bảng → company, playback, devices = **3**, không phải 11. Đo lại theo import client backend ở BẤT KỲ file (libs/{gateway,brm,cmi,device-api,media-manager,cloud-mngt} | @cap/brm | @cap/api-client, bỏ test): access 3, camera 1, company 3, devices 4, iam 13, places 2, playback 1, video 3 = **8 feature**; live 0 (đi qua features/access); **alerts 0, events 0, search 0** — cả ba không có actions.ts, không 'use server', chỉ mock (alerts mock-files=10; events/types.ts:1 \"UI-only: chưa có backend\"; search/types.ts:1 \"UI-only: chưa có endpoint\"). Use-case @cap/core: camera, devices (2).",
+"problem": "Con số đầu bảng \"Năm fact chống-đoán-sai\" không tái lập được bằng chính lệnh nó ghi — vi phạm luật 1 của AGENTS.md. Agent đọc \"11/13\" sẽ tin alerts/events/search đã có đường dữ liệu thật và đi tìm/đẻ actions.ts + libs client cho chúng, hoặc nối UI mock vào endpoint chưa tồn tại.",
+"fix": "docs/architecture.md:53 và :66 sửa thành: `Đường A — 8 feature (access, company, devices, iam, places, playback, video, camera*) · Đường B — 2 (camera, devices, qua use-case @cap/core) · UI-only mock, CHƯA có backend — 3 (alerts, events, search)`; cột lệnh đổi thành `grep -rlE \"@/libs/(gateway|brm|cmi|device-api|media-manager|cloud-mngt)|@cap/brm|@cap/api-client\" features/<f> | grep -v test`. Sửa cùng nội dung ở AGENTS.md:14-15, fe-architecture/SKILL.md:18-20, decisions.md:25 (thêm dòng \"đo lại 2026-09-04\")."
+},
+{
+"severity": "high",
+"category": "coverage",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 67,
+"claim": "\"Page LUÔN mở đầu bằng `requireSession()` rồi `requireRoute('<key>')` — 13 page đang làm đúng thế.\" Cùng luật ở .claude/skills/access-control/SKILL.md:55 (\"2. `await requireSession()` rồi `await requireRoute`\") và docs/architecture.md:85.",
+"evidence": "for p in (dashboard)/*/page.tsx: grep -c requireSession → chỉ 4/14 (groups, permissions, roles, structure); layout.tsx requireSession=1. requireRoute: 12/14 — access-debug 0, events 0. events/page.tsx:1-3: \"Miễn gác trong DASHBOARD_ROUTES → KHÔNG gọi requireRoute (routes.test chốt: trang miễn gác không được gọi)\". features/access/routes.test.ts:78-82: `it('trang miễn gác không được gọi requireRoute')` → expect(src.includes('requireRoute(')).toBe(false). routes.ts có 3 entry `action: null` (events :220, permissions :232, access-debug :241).",
+"problem": "Skill dạy điều test cấm: agent thêm trang `action: null` + `exemptReason` theo hướng dẫn rồi gọi requireRoute như skill bảo → `routes.test.ts` đỏ, và agent không hiểu vì skill nói \"LUÔN\". Con số \"13 page\" cũng sai cả hai chiều (4 gọi requireSession, 12 gọi requireRoute).",
+"fix": "fe-architecture/SKILL.md:64 đổi thành `page.tsx  RSC: requireRoute('<key>') + nạp data + render — requireSession() đã chạy ở (dashboard)/layout.tsx, page chỉ gọi lại khi cần session object`; :67-68 thay bằng: \"Trang CÓ `action` phải gọi `requireRoute('<key>')` đúng key (12/14 page). Trang `action: null` (miễn gác, có `exemptReason`) **KHÔNG được** gọi requireRoute — `routes.test.ts` chặn cả hai chiều.\" Sửa tương tự access-control/SKILL.md:55 và docs/architecture.md:85."
+},
+{
+"severity": "medium",
+"category": "coverage",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 47,
+"claim": "Bảng \"Thêm gì → đặt đâu\" (dòng 31-48) và khối \"Dựng một feature mới — thứ tự\" (60-66) không có dòng nào cho chuỗi hiển thị / i18n. Luật \"Code MỚI bắt buộc đi qua useTranslations/getTranslations, thêm key vào cả vi.json lẫn en.json\" chỉ nằm ở docs/tech-debt.md:14-19 — file AGENTS.md:63 gắn nhãn \"Nợ kỹ thuật, roadmap (đừng tự sửa)\".",
+"evidence": "grep -rn useTranslations .claude/skills docs/architecture.md AGENTS.md → 0; chỉ docs/tech-debt.md:15,18. Code: find features components -name '*.tsx' (bỏ test) = 124, dùng useTranslations/getTranslations = 66; 20 file .tsx có chuỗi tiếng Việt có dấu ngoài comment mà không i18n (vd features/alerts/components/AlertsWorkspace.tsx:24 `'Nguyễn Văn A'`, features/places/components/ChangePlaceDialog.tsx, features/devices/components/AddDeviceProgress.tsx). apps/web/src/libs/messages.test.ts chỉ chặn lệch khoá vi↔en, không chặn chuỗi cứng. tech-debt.md:15 ghi \"16 file\" (2026-08-12), nay grep -rl useTranslations apps/web/src = 68.",
+"problem": "Agent dựng màn mới theo skill sẽ cắm chuỗi tiếng Việt vào JSX (đúng như 20 file đang làm), không có test/lint nào bắt, `/en` tiếp tục ra hỗn hợp — đây là nợ tech-debt.md đang cố trả mà skill hành động lại không nhắc.",
+"fix": "Thêm dòng vào bảng fe-architecture/SKILL.md sau dòng 47: `| Chuỗi hiển thị | \\`apps/web/messages/vi.json\\` + \\`en.json\\` cùng khoá (\\`libs/messages.test.ts\\` chặn lệch); đọc bằng \\`useTranslations\\` (client) / \\`getTranslations\\` (RSC). KHÔNG cắm chuỗi tiếng Việt trong JSX |`. Thêm vào mục \"Không bao giờ\" (dòng 93): \"Cắm chuỗi hiển thị thẳng trong component — đi qua messages/*.json.\" Cập nhật docs/tech-debt.md:15 \"16 file\" → \"68 file (2026-09-04)\"."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/figma-pipeline/references/pages/iam.md",
+"line": 18,
+"claim": "\"Feature module: `apps/web/src/features/authz/` (`groups-accounts/`, `roles/`, `members/`, `structure/`)\"; dòng 38, 40 map Group/Role → `features/authz/...`. iam-password.md:5 \"`features/authz/password/` (chưa có)\", :35-36 trỏ `features/authz/password/PasswordPolicy*.tsx`. login.md:55,57 ghi `CompanyIdForm.tsx (chưa có)`, `AppDownloadLinks.tsx (chưa có)`.",
+"evidence": "ls apps/web/src/features/authz → No such file or directory. ls apps/web/src/features/iam → groups-accounts/ roles/ members/ structure/ password/ vms/. ls features/iam/password → PasswordPolicyForm.tsx PasswordPolicyPageClient.tsx actions.ts data.ts … ls features/auth/components → AppDownloadLinks.tsx AuthDarkTheme.tsx AuthSpaceBackground.tsx CompanyIdForm.tsx. grep -rn 'features/authz' .claude/skills → 6 dòng (iam.md:18,38,40; iam-password.md:5,35,36).",
+"problem": "Ánh xạ Figma↔repo là loại B (\"tin tới khi design đổi\", không phải loại A phải grep lại). Agent làm tiếp màn IAM/password theo spec sẽ tạo `features/authz/` mới hoặc dựng lại PasswordPolicyForm/CompanyIdForm đã có — đúng lỗi \"dựng lại thứ đã tồn tại\" mà figma-build bước 5 muốn tránh.",
+"fix": "sed 's#features/authz/#features/iam/#g' trên iam.md và iam-password.md; iam-password.md:5 đổi \"(chưa có)\" → \"(ĐÃ CÓ 2026-08-28: PasswordPolicyForm.tsx, PasswordPolicyPageClient.tsx, actions.ts, data.ts, policy-payload.ts)\"; login.md:55 và :57 bỏ \"(chưa có)\" cho CompanyIdForm.tsx và AppDownloadLinks.tsx; thêm dòng đóng dấu \"Đối chiếu đường dẫn repo 2026-09-04\" ở đầu ba file."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "\"Quy ước nhánh/commit/MR của repo này: chưa có skill (`git-flow` nằm trong kế hoạch `docs/fe-kit/01-plan-skills.md`, mục S4). Hiện commit dùng hai dạng lẫn nhau … — hỏi user nếu cần chọn.\"",
+"evidence": "ls .claude/skills/git-flow/SKILL.md → tồn tại (127 dòng). git-flow/SKILL.md:42-43: \"Tiền tố `[RPA-xxxx]` chỉ 8/60 — nếu user không yêu cầu thì đi theo dạng đa số\" (không hỏi). docs/fe-kit/progress.md:366-378 ghi S4 đã xong.",
+"problem": "Skill jira và skill git-flow cùng nạp khi làm ticket→nhánh→commit; jira bảo \"chưa có skill, hỏi user chọn dạng commit\", git-flow bảo \"mặc định dạng đa số, không hỏi\". Agent sẽ hỏi thừa hoặc chọn ngẫu nhiên tuỳ skill nào đọc sau.",
+"fix": "Thay hai gạch đầu dòng ở jira/SKILL.md:117-120 bằng: `- Script là **bản sao** của b2b-gokit/.claude/skills/git-flow/jira.sh — sửa bên nào sync bên kia.` và `- Nhánh / commit / MR / hook commit-msg: skill \\`git-flow\\` (không hỏi lại dạng commit — theo dạng đa số).`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "README.md",
+"line": 20,
+"claim": "Cây packages/ liệt kê 7 package (thiếu auth, brm, logger); :26 \"`@cap/ui` — Shared React components (web + desktop)\"; :31 \"mọi data đến từ External REST API qua `createApiClient()`\"; :74 \"`API_URL=http://localhost:3001` # External REST API base URL\"; :92 \"Production: thay thế dev session bằng Keycloak / Auth0 / AWS Cognito\"; :96-106 \"Thêm feature mới\" đi types → validators → api-client → core use-case → actions.",
+"evidence": "ls -d packages/*/ | wc -l → 10; grep -nE '@cap/(auth|brm|logger)' README.md → rc=1 (không có). find packages/ui/src -name '*.tsx' | wc -l → 0. grep -rli keycloak apps/web/src/libs → 5 file (Keycloak đang chạy, docs/auth-sso.md). AGENTS.md:19 gọi localhost:3001 là \"di sản, KHÔNG phải địa chỉ backend\". fe-architecture/SKILL.md:23 \"Mặc định dùng đường A\" — README dạy đúng đường B mà docs/fe-kit/01-plan-skills.md:47-49 gọi là \"đường đã chết\".",
+"problem": "README là file đầu tiên người mới và Cursor/Copilot đọc (không nạp CLAUDE.md). Nó dạy công thức thêm feature ngược với skill, mô tả @cap/ui là kho component (0 file), coi Keycloak là việc tương lai. Agent ngoài Claude Code đoán sai kiến trúc ngay từ dòng đầu.",
+"fix": "Xoá các mục README.md:9-49 (Kiến trúc, Nguyên tắc, Dependency flow), :84-94 (Luồng xác thực), :96-106 (Thêm feature mới); thay bằng một đoạn: \"Kiến trúc, luồng dữ liệu, ranh giới package: `AGENTS.md` (điểm vào) → `docs/architecture.md`. Thêm feature: skill `fe-architecture` (`.claude/skills/fe-architecture/SKILL.md`).\" Giữ Quick Start, Lệnh hay dùng, Tài liệu. Ở :74 bỏ dòng API_URL, trỏ `apps/web/.env.example`."
+},
+{
+"severity": "low",
+"category": "coverage",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 57,
+"claim": "Bảng \"Chọn client nào\" (dòng 50-57) liệt kê gatewayClient / brmApiClient / brmClient / device-api / cmi / media-manager. docs/architecture.md:125 bảng libs/ liệt kê `brm.ts cmi.ts device-api.ts media-manager.ts`.",
+"evidence": "ls apps/web/src/libs → có thêm cloud-mngt.ts (27 dòng) và log-buffer.ts (158 dòng); grep -rn 'cloud-mngt\\|log-buffer' .claude/skills docs/architecture.md docs/livestream.md AGENTS.md → 0 (chỉ docs/architecture.md:? không có). libs/cloud-mngt.ts:9-16: \"⚠ Host THỨ BA (beta-cloud-mngt.fcam.vn), không nằm sau gateway nào … ⚠ Endpoint KHÔNG kiểm token — curl trần trả 200 (đo 2026-08-31)\". Dùng ở 7 file features/playback (retention.ts, timeline.ts, actions.ts…). packages/config/src/environments.ts:70-72 cùng ⚠.",
+"problem": "Agent làm màn Xem lại đọc skill thấy media-manager là client duy nhất cho băng ghi → nhầm retention (\"giữ băng bao nhiêu ngày\") với media-manager (\"có băng nào trong khoảng\"), hoặc thêm hằng host cloud-mngt vào feature vì bảng client không có nó.",
+"fix": "Thêm vào bảng api-contract/SKILL.md sau dòng 57: `| cloud-mngt (retention: camera giữ băng bao nhiêu ngày — KHÁC media-manager) | \\`libs/cloud-mngt.ts\\` | \\`cloudMngtApi\\` — host thứ ba, KHÔNG sau gateway, override \\`CLOUD_MNGT_URI\\` |`. docs/architecture.md:125 thêm `cloud-mngt.ts` vào danh sách client; thêm dòng `| \\`log-buffer.ts\\` | Đệm log HTTP của BFF cho /api/debug/logs | state phải treo trên globalThis — đọc ⚠ đầu file |`."
+},
+{
+"severity": "low",
+"category": "coverage",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 83,
+"claim": "Mục \"Bẫy đã trả giá\" / \"Chạy thử\" không nói cách soi lời gọi BE thật từ trình duyệt; AGENTS.md:29 \"logger — nơi DUY NHẤT được gọi console.*\".",
+"evidence": "grep -rF API_LOG_CONSOLE .claude/skills docs AGENTS.md CONTRIBUTING.md README.md → 0; trong code: 5 file (apps/web/.env.example:119,131; libs/log-buffer.ts; app/api/debug/logs/route.ts; components/debug/ApiLogConsole.tsx mount ở app/[locale]/layout.tsx). route.ts:1-19: SSE, bật bằng API_LOG_CONSOLE=1 + phiên đăng nhập, đã sanitize. Vi phạm console thật: features/iam/groups-accounts/GroupsAccountsPageClient.tsx:191, UserConfigModal.tsx:184,200 dùng console.error.",
+"problem": "Công cụ debug BFF đã dựng xong (có ⚠ về globalThis/sink) nhưng không skill/doc nào nhắc; agent gặp \"gọi API lỗi trên beta\" sẽ thêm console.log (như 2 file iam đã làm) thay vì bật cờ có sẵn.",
+"fix": "Thêm vào api-contract/SKILL.md sau dòng 83 (đầu mục Bẫy): \"- **Soi call BE từ trình duyệt**: `API_LOG_CONSOLE=1` → DevTools nhận log HTTP của BFF qua `/api/debug/logs` (SSE, cần phiên; `LOG_HTTP_FULL_BODY=1` bỏ trần body). Đệm ở `libs/log-buffer.ts` — đọc ⚠ đầu file trước khi sửa. Đừng thêm `console.*` trong feature.\""
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/access-control.md",
+"line": 63,
+"claim": "\"Menu sider (`layout.tsx`) và cổng vào trang (`requireRoute(key)` ở `page.tsx`) đều đọc từ đó [DASHBOARD_ROUTES]\". Skill access-control:52-53 lại nói icon ở `components/layout/AppNavRail.tsx` map `ICONS`.",
+"evidence": "grep -rl DASHBOARD_ROUTES apps/web/src → app/[locale]/(dashboard)/AppShell.tsx, components/layout/ManagementSectionNav.tsx, events/page.tsx, search/page.tsx, features/access/routes.ts, routes.test.ts — KHÔNG có layout.tsx. AppNavRail.tsx:58 `const ICONS: Record<MenuKey,…>`.",
+"problem": "Agent sửa menu theo doc sẽ mở `(dashboard)/layout.tsx` tìm phần dựng menu — không có; thứ đọc registry là `AppShell.tsx` (rail) và `ManagementSectionNav.tsx` (cột Quản lý).",
+"fix": "docs/access-control.md:63 đổi \"Menu sider (`layout.tsx`)\" → \"Rail (`(dashboard)/AppShell.tsx`, icon ở `components/layout/AppNavRail.tsx` map `ICONS`) và cột Quản lý (`components/layout/ManagementSectionNav.tsx`)\"."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "docs/auth-sso.md",
+"line": 10,
+"claim": "Dòng 10-12 lặp lại tiêu đề \"# Auth — SSO OIDC/Keycloak (web)\" + blockquote \"Nguồn chân lý đầy đủ. Code: packages/auth/ …\" đã có ở dòng 1-3.",
+"evidence": "grep -n '^# Auth\\|^> Nguồn chân lý' docs/auth-sso.md → 1, 3, 10, 12 (hai tiêu đề H1, hai blockquote gần trùng chữ).",
+"problem": "File 46 dòng có 2 H1; đoạn quan trọng \"Một công ty = một realm\" (dòng 5-8) kẹt giữa hai tiêu đề nên dễ bị đọc như phần mở đầu lặp và bỏ qua.",
+"fix": "Xoá docs/auth-sso.md dòng 9-12 (dòng trống + H1 + blockquote thứ hai), giữ dòng 1-8 rồi vào thẳng khối sơ đồ `/api/auth/login → …`."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "packages/README.md",
+"line": 47,
+"claim": "\"@cap/ui | Trình bày | component \\\"câm\\\" (Button), design token\"; :46 \"@cap/hooks … hook `useCamera/useAuth...`\"; :17 \"(component + token)\". AGENTS.md:39 trỏ file này là \"Ranh giới từng package\".",
+"evidence": "find packages/ui/src -name '*.tsx' | wc -l → 0 (AGENTS.md:32 và ui-antd/SKILL.md:13 đều nói \"KHÔNG xuất component nào\"). grep export packages/hooks/src/index.ts → platform, session, useCamera, useAlert, query-client, ApiClientProvider/useApiClient — không có useAuth.",
+"problem": "AGENTS.md (mỏng) gửi agent sang packages/README.md để hiểu ranh giới, và ở đó lại đọc được điều AGENTS.md vừa in hoa phủ nhận (\"ui KHÔNG xuất component nào\"). Hai nguồn chân lý cãi nhau đúng ở một trong \"ba chỗ hay lẫn nhất\". (File ngoài 49 file rà nhưng được AGENTS.md:39 dẫn tới.)",
+"fix": "packages/README.md:17 đổi \"(component + token)\" → \"(token + theme antd, KHÔNG component)\"; :47 cột ĐƯỢC chứa → \"design token, cấu hình theme antd (`antd-theme.ts`, `css-overrides.ts`)\", cột KHÔNG được chứa thêm \"component React\"; :46 \"`useCamera/useAuth...`\" → \"`useCamera/useAlert`, `ApiClientProvider`\"; :67 \"component / token hiển thị\" → \"token / theme hiển thị (component = antd ở apps/web)\"."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "docs/tech-debt.md",
+"line": 32,
+"claim": "\"`packages/api-client/package.json` có `@trpc/client` + `@trpc/server` trong `dependencies` nhưng không import ở đâu — dead dependency, có thể gỡ an toàn.\"",
+"evidence": "grep -n trpc packages/api-client/package.json → rc=1 (không có).",
+"problem": "Mục nợ đã trả nhưng còn ghi là nợ; agent dọn tech-debt sẽ mất thời gian tìm hoặc báo \"đã gỡ\" lần nữa. File này cũng là nơi AGENTS.md dặn \"đừng tự sửa\" nên không ai dọn.",
+"fix": "Xoá gạch đầu dòng docs/tech-debt.md:32, hoặc đổi thành \"~~@trpc trong api-client~~ ĐÃ GỠ (kiểm 2026-09-04: `grep trpc packages/api-client/package.json` → rỗng)\"."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": ".githooks/commit-msg",
+"line": 20,
+"claim": "Hook: `TYPES='feat|fix|refactor|test|docs|chore|perf|ci|build|style|revert'` (11). CONTRIBUTING.md:99 và git-flow/SKILL.md:38: \"`type` ∈ `feat | fix | refactor | test | docs | chore | perf | ci`\" (8). Hook tự nhận là \"Nguồn luật: CONTRIBUTING.md §4\".",
+"evidence": "grep -n '^TYPES=' .githooks/commit-msg → 11 type; grep -n 'type. ∈' CONTRIBUTING.md .claude/skills/git-flow/SKILL.md → 8 type ở cả hai. bash -n .githooks/commit-msg → OK.",
+"problem": "Agent soạn `style(ui): …` hay `revert: …` sẽ tự bác vì skill không cho, trong khi hook chấp nhận; hoặc ngược lại tự tin `build:` là sai quy ước. Hai nguồn lệch mà hook nói nó lấy luật từ CONTRIBUTING.",
+"fix": "Chọn một: (a) CONTRIBUTING.md:99 và git-flow/SKILL.md:38 thêm `| build | style | revert`; hoặc (b) .githooks/commit-msg:20 bỏ `|build|style|revert`. Khuyến nghị (a) vì `revert` là dạng git sinh khi dùng `git revert` với message tuỳ chỉnh."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "CONTRIBUTING.md",
+"line": 166,
+"claim": "Checklist MR: \"không `console.*` ngoài `packages/logger/src/sinks.ts`\"; AGENTS.md:29 \"logger … nơi DUY NHẤT được gọi console.*\".",
+"evidence": "grep -rn 'console\\.' apps/web/src packages/*/src (bỏ test, bỏ sinks.ts) → 4 chỗ không phải debug có chủ ý: features/iam/groups-accounts/GroupsAccountsPageClient.tsx:191, UserConfigModal.tsx:184,200 (console.error), packages/core/src/entities/access-profile.ts:26 (console.warn); 2 chỗ có chủ ý: features/access/profile.ts:86-89 (ACCESS_DEBUG), components/debug/ApiLogConsole.tsx:74-81 (in ra DevTools là mục đích). cat .oxlintrc.json → chỉ ignorePatterns, không rule no-console → lint không chặn.",
+"problem": "Luật \"DUY NHẤT\" đã bị vi phạm 4 chỗ và không có lưới nào bắt; agent thấy code hiện hữu dùng console.error sẽ coi checklist là hình thức, hoặc ngược lại xoá luôn 2 chỗ debug có chủ ý khi \"dọn cho đúng luật\".",
+"fix": "CONTRIBUTING.md:166 sửa thành: \"không `console.*` ngoài `packages/logger/src/sinks.ts`; ngoại lệ có chủ ý: `features/access/profile.ts` (ACCESS_DEBUG) và `components/debug/ApiLogConsole.tsx` (in DevTools)\". Đồng thời sửa 3 console.error ở features/iam/groups-accounts sang `createLogger` của @cap/logger, và thêm vào .oxlintrc.json `\"rules\": {\"no-console\": \"error\"}` + `// oxlint-disable-next-line no-console` tại 2 ngoại lệ."
+},
+{
+"severity": "high",
+"category": "script",
+"file": ".githooks/commit-msg",
+"line": 46,
+"claim": "Trong thông báo fail: \"Sửa lại: git commit --amend\" (CONTRIBUTING.md:147 lặp lại: \"Message bị chặn thì sửa bằng git commit --amend\").",
+"evidence": "Repo tạm, hooksPath trỏ vào .githooks của repo: `git commit -m \"fix bug\"` → hook chặn, HEAD vẫn 3acec2d (không đổi=yes), số commit=1. Làm theo lời hook `git commit --amend --no-edit` → HEAD c39d5b8, subject vẫn là commit CŨ \"feat(iam): commit thứ nhất đã có sẵn\", files trong commit 1→2, số commit vẫn 1. Ngay sau khi bị chặn `.git/COMMIT_EDITMSG` = \"fix bug\"; `GIT_EDITOR=... git commit -eF .git/COMMIT_EDITMSG` tạo commit mới đúng (b907c04).",
+"problem": "Khi commit-msg hook fail, commit CHƯA tồn tại. `--amend` lúc này gộp toàn bộ thay đổi đang stage vào commit trước (có thể đã push) và mở message của commit trước — chính hàng rào bảo vệ quy ước lại dẫn người dùng đi phá lịch sử. Lời khuyên --amend chỉ đúng cho commit đã tạo (CONTRIBUTING §4 mốc áp dụng), không đúng cho ca bị hook chặn.",
+"fix": "Thay dòng 46 bằng 3 dòng (KHÔNG dùng backtick — heredoc không quote sẽ thực thi):\n  Sửa lại: commit CHƯA được tạo — chạy lại git commit với message đúng\n           (message vừa gõ còn ở .git/COMMIT_EDITMSG: git commit -eF .git/COMMIT_EDITMSG).\n           KHÔNG dùng --amend ở đây: nó sẽ gộp thay đổi vào commit TRƯỚC.\nCONTRIBUTING.md:147 sửa \"Message bị chặn thì sửa bằng `git commit --amend`\" → \"Message bị chặn thì commit chưa được tạo — gõ lại rồi `git commit` lần nữa (`git commit -eF .git/COMMIT_EDITMSG` để lấy lại message); `--amend` chỉ dùng khi commit đã tồn tại (§ Mốc áp dụng)\"."
+},
+{
+"severity": "medium",
+"category": "script",
+"file": ".claude/skills/jira/jira.sh",
+"line": 168,
+"claim": "`worklog KEY 2h [comment]` — COMMENT=\"$*\" tuỳ chọn; BODY ghép bằng `$([ -n \"$COMMENT\" ] && echo ...)`.",
+"evidence": "`FCAM_JIRA_PAT=dummy FCAM_JIRA_BASE=http://127.0.0.1:1 bash jira.sh worklog RPA-1 2h` → không in gì, rc=1, KHÔNG có dòng lỗi curl (chưa tới curl). Cùng lệnh có comment → \"curl: (7) Failed to connect\" rc=7 (tới curl). Cơ chế: `/bin/bash -c 'set -euo pipefail; C=\"\"; B=\"x$([ -n \"$C\" ] && echo y)\"; echo tới đây'` → không in, rc=1 — trạng thái của assignment = trạng thái của command substitution cuối, ở đây là 1 → set -e thoát. gokit dòng 166 giống hệt.",
+"problem": "Lệnh worklog không có comment luôn chết im lặng exit 1, không ghi gì, không báo lý do — agent/người dùng tưởng lỗi mạng/token. lenh.md ghi worklog với \"<comment>\" nên ít ai lộ, nhưng script khai báo comment là tuỳ chọn.",
+"fix": "Thay dòng 168 bằng 3 dòng:\n    BODY=\"{\\\"timeSpent\\\":$(_jstr \"$TIME\")\"\n    [ -n \"$COMMENT\" ] && BODY=\"$BODY,\\\"comment\\\":$(_jstr \"$COMMENT\")\"\n    BODY=\"$BODY}\"\n(cùng kiểu dòng 137–138 của `task`). Đã kiểm: sinh {\"timeSpent\": \"2h\"} hợp lệ, worklog không comment tới được curl. Sửa ở b2b-gokit/.claude/skills/git-flow/jira.sh:166 rồi sync theo luật một nguồn."
+},
+{
+"severity": "medium",
+"category": "script",
+"file": ".claude/skills/jira/jira.sh",
+"line": 50,
+"claim": "Comment 94–96: \"Hứng kết quả API vào biến TRƯỚC khi đưa qua python3… API hỏng thì… Gán vào biến thì set -e + pipefail thoát ngay tại dòng gán\" — tức _api lỗi thì không tới python.",
+"evidence": "`FCAM_JIRA_PAT=dummy FCAM_JIRA_BASE=http://127.0.0.1:1 bash jira.sh me` → in \"curl: (7) Failed to connect\" rồi 15 dòng Traceback json.decoder.JSONDecodeError, rc=1. `point RPA-1 9` (dòng 125 còn pipe thẳng `_api | _field`) y vậy. Nguyên nhân đo được: (a) `curl -sS -w '\\n%{http_code}' http://127.0.0.1:1/` in \"000\" rc=7 → code=000, `[ 000 -ge 400 ]` sai → _api `printf ''` return 0; (b) `/bin/bash -c 'set -e; f(){ x=\"$(false)\"; echo \"f tiếp tục\"; }; OUT=\"$(f)\"'` → in \"f tiếp tục\" rc=0: set -e KHÔNG kế thừa vào `$(...)` (bash 3.2 lẫn 5 mặc định, inherit_errexit tắt) nên `out=\"$(curl…)\"` fail cũng không dừng _api.",
+"problem": "Mọi lỗi transport (VPN tắt, sai FCAM_JIRA_BASE, timeout) đều bị traceback Python đè lên thông báo curl thật — đúng cái comment nói đã tránh. Chỉ lỗi HTTP ≥400 mới được bắt. Comment sai làm người sửa sau tin lớp bảo vệ có thật.",
+"fix": "Dòng 50: `out=\"$(curl \"${args[@]}\" \"$API$path\")\" || { echo \"LỖI curl (rc=$?) khi gọi $method $path\" >&2; return 1; }`. Dòng 68 tương tự với \"$AGILE$path\" và chữ \"(agile)\". Đã kiểm bản vá: `me` → \"curl: (7)…\" + \"LỖI curl (rc=7) khi gọi GET /myself\", rc=1, không traceback. Sửa comment 94–96 thành: \"_api tự return 1 khi curl lỗi hoặc HTTP ≥400; gán vào biến để set -e dừng trước python3\". Dòng 125 đổi thành `OUT=\"$(_api GET …)\"; IS_SUB=\"$(printf '%s' \"$OUT\" | _field …)\"` cho nhất quán. Sửa ở gokit rồi sync."
+},
+{
+"severity": "medium",
+"category": "script",
+"file": ".githooks/commit-msg",
+"line": 22,
+"claim": "PATTERN kết thúc `: .{10,}` — \"mô tả ít nhất 10 ký tự\". Dòng 72 đã biết \"${#SUBJECT} đếm BYTE… Đếm ký tự\" nhưng chỉ áp cho LEN.",
+"evidence": "Message `fix: sửa lỗi` (7 ký tự, 11 byte): LC_ALL unset → rc=0; LC_ALL=C → rc=0; LC_ALL=en_US.UTF-8 → rc=1 \"Sai type, hoặc mô tả ngắn hơn 10 ký tự\". ASCII 9/10 ký tự đúng ở mọi locale. Git truyền nguyên env cho hook: hook thăm dò từ session này nhận `LANG=[] LC_ALL=[] LC_CTYPE=[]` (chính phiên Claude Code này không có LANG). Tính byte trên 60 commit no-merge: p50 79, p90 105, 9/60 >100 — lệch xa số ký tự (69/92/3).",
+"problem": "Luật \"≥10 ký tự\" đổi nghĩa theo LANG của tiến trình gọi git: terminal có LANG thì chặn, GUI client/agent không LANG thì lọt mô tả tiếng Việt 4–9 chữ. Cùng một message pass/fail tuỳ máy — hook không còn là hàng rào thống nhất, và mâu thuẫn với chính nhận thức ở dòng 72.",
+"fix": "(1) Dòng 22: `.{10,}` → `.+`. (2) Ngay sau dòng 22 thêm:\ncount_chars() {\n  if command -v python3 >/dev/null 2>&1; then python3 -c 'import sys;print(len(sys.stdin.read()))'\n  else LC_ALL=C.UTF-8 wc -m | tr -d ' '; fi\n}\n(3) Sau dòng 65 (DESC) thêm:\nDLEN=\"$(printf '%s' \"$DESC\" | count_chars)\"\ncase \"$DLEN\" in ''|*[!0-9]*) fail \"Hook không đếm được độ dài (cần python3, hoặc wc -m + locale C.UTF-8).\" ;; esac\n[ \"$DLEN\" -ge 10 ] || fail \"Mô tả ngắn hơn 10 ký tự ($DLEN).\"\n(4) Dòng 59: `fail \"Sai type (type/scope phải viết thường), hoặc thiếu mô tả.\"`. Đã kiểm: `fix: sửa lỗi` → rc=1 \"(7)\" ở cả 3 locale; 9 ASCII rc=1, 10 ASCII rc=0; 100 commit gần nhất vẫn 94 đạt/6 chặn (không đổi)."
+},
+{
+"severity": "medium",
+"category": "script",
+"file": ".githooks/commit-msg",
+"line": 73,
+"claim": "LEN đếm bằng `python3 -c …`; hook tự nhận là \"hàng rào DUY NHẤT chạy trước khi commit tồn tại\" (dòng 7).",
+"evidence": "`env -i PATH=<bin chỉ có bash grep sed head cat> /bin/bash .githooks/commit-msg m.txt` với message 130 ký tự ASCII → stderr: \"line 73: python3: command not found\", \"line 74: [: : integer expression expected\", \"line 76: [: : integer expression expected\", rc=0 → commit ĐƯỢC chấp nhận. Repo FE chỉ bảo đảm Node (engines node >=22), không bảo đảm python3.",
+"problem": "Thiếu python3 → hook fail-open cho luật trần 100 (và cả luật ≥10 ký tự sau khi sửa finding trên nếu không có fallback), chỉ để lại 3 dòng lỗi bash mà người dùng dễ bỏ qua. Trên máy Linux/devcontainer không python3, hàng rào biến mất im lặng.",
+"fix": "Dùng `count_chars` (định nghĩa ở finding dòng 22) và fail-closed: thay dòng 73 bằng\nLEN=\"$(printf '%s' \"$SUBJECT\" | count_chars)\"\ncase \"$LEN\" in ''|*[!0-9]*) fail \"Hook không đếm được độ dài (cần python3, hoặc wc -m + locale C.UTF-8).\" ;; esac\nĐã kiểm không python3: `printf 'ệệ' | LC_ALL=C.UTF-8 wc -m` = 2 (macOS có C.UTF-8 và en_US.UTF-8 trong `locale -a`); 130 ký tự → rc=1 \"dài 130\", 101 ký tự có dấu → rc=1, 100 → rc=0 kèm ⚠, 44 → rc=0 sạch."
+},
+{
+"severity": "low",
+"category": "script",
+"file": ".githooks/commit-msg",
+"line": 12,
+"claim": "SUBJECT = dòng đầu sau khi `grep -v '^#'` — coi mọi dòng '#' là comment của git.",
+"evidence": "Repo tạm: `git commit --allow-empty -m \"#hotfix\" -m \"fix(iam): sửa lỗi đăng nhập SSO\"` → hook rc=0, `git log -1 --format=%s` = \"#hotfix\". Với -m/-F git dùng cleanup=whitespace, KHÔNG bỏ dòng '#'. Repo không đặt commit.template/commit.cleanup (`git config --get` rỗng).",
+"problem": "False negative: hook kiểm dòng 2 trong khi subject thật là dòng '#…' — commit sai quy ước lọt qua hàng rào. Hiếm nhưng là kẽ hở đúng chỗ hook tự nhận là chặn duy nhất.",
+"fix": "Sau dòng 53 thêm:\n# -m/-F: git KHÔNG bỏ dòng '#' (cleanup=whitespace) → dòng '#' đầu sẽ thành subject thật.\nFIRST=\"$(sed '/^[[:space:]]*$/d' \"$MSG_FILE\" | head -n1)\"\ncase \"$FIRST\" in '#'*) fail \"Dòng đầu bắt đầu bằng '#': với -m/-F git giữ nguyên nó làm subject.\" ;; esac\nĐã kiểm: ca #hotfix → rc=1; editor mode (message trên, comment git ở dưới) → rc=0; chỉ comment → \"Message rỗng\"; 100 commit vẫn 94/6. Lưu ý: người dùng có commit.template cá nhân bắt đầu bằng dòng '#' sẽ bị chặn — ghi vào comment hook."
+},
+{
+"severity": "low",
+"category": "script",
+"file": ".claude/skills/jira/jira.sh",
+"line": 186,
+"claim": "`help) sed -n '2,32p' \"$0\"` — in phần header hướng dẫn.",
+"evidence": "`bash jira.sh help | tail -10` in ra `set -euo pipefail`, `if [ -z \"${FCAM_JIRA_PAT:-}\" ]; then`, `set -a`, 2 dòng `. ./.jira.env` — header ở bản này kết thúc dòng 25 (gokit: 23) nhưng range vẫn 2,32 cứng; gokit cũng lộ dòng 24–32.",
+"problem": "`jira help` (và `jira` không tham số) in 7 dòng mã shell lẫn vào hướng dẫn — người mới đọc tưởng đó là thứ phải gõ. Mỗi lần thêm dòng header lại lệch thêm.",
+"fix": "Dòng 186: `\"\"|-h|--help|help) awk 'NR==1{next} !/^#/{exit} {print}' \"$0\" ;;` (in từ dòng 2 tới trước dòng không-comment đầu tiên). Đã kiểm: output kết thúc ở dòng \"#\" cuối header, 0 dòng `set -euo`. Sửa ở gokit dòng 184 rồi sync."
+},
+{
+"severity": "low",
+"category": "clarity",
+"file": ".claude/skills/jira/jira.sh",
+"line": 14,
+"claim": "\"(b) Hoặc export trong ~/.zshrc (env sẵn sẽ được ưu tiên hơn file)\"; .jira.env.example dòng 5–6 đặt `FCAM_JIRA_PROJECT=RPA` trong file.",
+"evidence": "~/.jira.env chứa `FCAM_JIRA_PROJECT=RPA`, env có FCAM_JIRA_PAT: `FCAM_JIRA_PAT=dummy HOME=<tmp> FCAM_JIRA_BASE=http://127.0.0.1:1 bash jira.sh task \"thử\"` → \"Chưa xác định được project key…\" rc=1. Dòng 29: cả khối nạp file chỉ chạy khi PAT rỗng — file bị bỏ qua hoàn toàn, không phải \"ưu tiên\".",
+"problem": "Người export PAT trong .zshrc (cách b) và để PROJECT trong ~/.jira.env theo example sẽ bị `task` từ chối dù đã cấu hình đúng theo hướng dẫn — \"ưu tiên hơn\" gợi ý hợp nhất, thực tế là loại trừ.",
+"fix": "jira.sh dòng 14 sửa thành: \"(b) Hoặc export trong ~/.zshrc. LƯU Ý: khi FCAM_JIRA_PAT đã có trong env thì file .jira.env KHÔNG được đọc — export cả FCAM_JIRA_PROJECT, hoặc để cả hai trong file.\" .jira.env.example dòng 2 thêm: \"# Nếu đã export FCAM_JIRA_PAT trong shell thì file này bị bỏ qua — export luôn FCAM_JIRA_PROJECT.\" (Sửa logic nạp sẽ đụng thứ tự ưu tiên ./ > ~/ và ca PAT rỗng trong file, không đáng cho severity này.)"
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".githooks/commit-msg",
+"line": 70,
+"claim": "\"Đo repo 2026-09-03 trên 60 commit: p50 69, p90 84; 2/60 vượt 100\" (CONTRIBUTING.md §4 lặp: \"p50 69, p90 84, chỉ 2 cái vượt 100\").",
+"evidence": "`git log --format=%s -60` (KỂ CẢ merge) → n=60 >100=2 p50=69 p90=84 — khớp con số. `git log --no-merges --format=%s -60` → >100=3 p50=69 p90=92; `--no-merges --before=2026-09-03T00:00:00 -60` → >100=2 p50=66 p90=85. 40/100 commit gần nhất là merge, hook bỏ qua chúng (dòng 15–18).",
+"problem": "Số liệu làm căn cứ cho ngưỡng 72/100 được đo trên tập có 40% merge commit ngắn (\"Merge branch …\") mà hook không áp luật → p90 thấp hơn thực tế 8 ký tự, số vượt trần thiếu 1. Không đổi kết luận ngưỡng, nhưng CONTRIBUTING cùng đoạn dùng `--no-merges` cho 52/60 và 8/60 — hai phép đo cùng đoạn không cùng tập.",
+"fix": "Dòng 70–71 sửa: \"Đo 2026-09-04, 60 commit no-merge (`git log --no-merges --format=%s -60`, đếm ký tự): p50 69, p90 92; 3/60 vượt 100 và cả ba là commit nhồi nhiều việc.\" CONTRIBUTING.md đoạn \"Ngắn gọn, cô đọng\" sửa cùng số; đoạn \"Đo trên 60 commit gần nhất: 57 đạt, 3 không\" → \"54 đạt, 6 không (3 sai dạng + 3 dài 104/107/124 ký tự)\" hoặc ghi rõ đo trước khi có luật trần 100."
+},
+{
+"severity": "high",
+"category": "accuracy",
+"file": "README.md",
+"line": 19,
+"claim": "Cây `packages/` có 7 package (types, api-client, core, hooks, validators, config, ui); `ui — Shared React components (web + desktop)`; \"mọi data đến từ External REST API qua createApiClient()\"; \"Business logic sống trong @cap/core … enforce RBAC\"; mục \"Thêm feature mới\" bước 3–4: thêm endpoint vào `packages/api-client/src/client.ts` + entity/use-case trong `packages/core`.",
+"evidence": "`ls packages | grep -v README` → 10 dir: api-client auth brm config core hooks logger types ui validators (README thiếu auth, brm, logger). `find packages/ui/src -name '*.tsx' | wc -l` → 0. Đường dữ liệu thật: grep import client trong từng feature → chỉ camera, devices dùng use-case @cap/core (`grep -lE 'use-cases|@cap/core' features/*/actions.ts` → camera, devices); 7 feature import `@/libs/(gateway|brm|cmi|device-api|media-manager|cloud-mngt)`. `docs/fe-kit/01-plan-skills.md:19-21` và W2 đã xoá SKILL.md gốc chính vì \"dạy đường đã chết\" (ports/use-cases), nhưng README vẫn dạy đúng đường đó.",
+"problem": "README là file đầu tiên người mới đọc; nó mâu thuẫn trực diện với 3/5 \"fact chống-đoán-sai\" của AGENTS.md (10 package, ui không xuất component, mặc định đường A). Agent/dev đọc README sẽ thêm feature qua api-client + core use-case — đúng thứ AGENTS.md bảo đừng.",
+"fix": "Thay khối `## Kiến trúc` (dòng 11-47) bằng bảng 10 package nén như AGENTS.md dòng 25-36 (hoặc chỉ trỏ `docs/architecture.md §2`); sửa dòng 26 thành `ui — design token + antd theme (KHÔNG xuất component)`; sửa dòng 31-32 thành \"data đi qua client ở `apps/web/src/libs/*` (đường A), chỉ `camera`/`devices` còn qua use-case @cap/core\"; thay bước 3-4 của `## Thêm feature mới` (dòng 100-101) bằng thứ tự ở `.claude/skills/fe-architecture/SKILL.md` dòng 59-65 (types.ts → actions.ts → view-model.ts → components → page.tsx), hoặc xoá mục này và trỏ skill."
+},
+{
+"severity": "high",
+"category": "accuracy",
+"file": "CONTRIBUTING.md",
+"line": 13,
+"claim": "`master` | Đứng yên từ 2026-07-14, chỉ có commit \"adopt source as master\" | `git rev-list --count origin/master..origin/development` → **401**",
+"evidence": "`git rev-list --count origin/master..origin/development` → 1; `git rev-list --count origin/development..origin/master` → 1. `git log -1 --format='%ci %s' origin/master` → `2026-09-04 00:06:39 +0700 Merge branch 'feature/RPA-4210-skill-docs' into 'master'`. `git merge-base origin/master origin/development` → c58b7a5 (2026-09-03 23:58). Cùng MR được merge vào CẢ master (00:06) và development (00:07).",
+"problem": "Số 401 và \"đứng yên từ 2026-07-14\" đã sai sau đúng một ngày; §8 mục 1 (\"không ai merge vào\") cũng sai. Lệnh đo kèm theo trả 1 chứ không 401, người đọc sẽ nghi cả bảng. Cùng claim lặp ở `.claude/skills/git-flow/SKILL.md:15` và `docs/fe-kit/progress.md:100`.",
+"fix": "CONTRIBUTING.md dòng 13: thay bằng `master | Nhận cùng MR với development từ 2026-09-04 (RPA-4210); trước đó đứng yên 2026-07-14→09-03 | git log -1 origin/master; git rev-list --count origin/master..origin/development`. §8 mục 1 (dòng 262-263): đổi câu hỏi thành \"master và development đang nhận cùng MR — giữ hai nhánh làm gì?\". `.claude/skills/git-flow/SKILL.md:15`: thay ô master bằng \"đồng bộ với development từ 2026-09-04; đo lại bằng `git rev-list --count origin/master..origin/development`\" (bỏ số cứng)."
+},
+{
+"severity": "high",
+"category": "accuracy",
+"file": "docs/architecture.md",
+"line": 66,
+"claim": "Đường A (11/13 feature) … | feature gọi thẳng client | `grep -l \"@/libs/\\(gateway\\|brm\\|cmi\\|device-api\\|media-manager\\)\" features/*/actions.ts` | 11/13",
+"evidence": "Chạy đúng lệnh trong bảng trên `apps/web/src`: `grep -lE '@/libs/(gateway|brm|cmi|device-api|media-manager)' features/*/actions.ts | wc -l` → 3 (company, playback, devices). Đo theo feature (bất kỳ file .ts/.tsx trong feature import client libs, kể cả cloud-mngt): access=2 file, company=3, devices=4, iam=4, places=1, playback=1, video=2 → **7/13**; dùng use-case @cap/core: camera, devices → 2/13; alerts, auth, events, live, search → 0 file import client libs (alerts/live có `mock.ts`, auth fetch tay iam-v2).",
+"problem": "\"11/13\" là fact số 2 của AGENTS.md (dòng 14), lặp ở `fe-architecture/SKILL.md:18`, `decisions.md D-003`, `01-plan-skills.md:20`. Lệnh đo kèm theo không tái lập được (3 ≠ 11) — vi phạm chính luật \"đo được\" của file. Con số đúng là 7 đi client libs, 2 use-case, 4–5 chưa nối BE.",
+"fix": "docs/architecture.md dòng 53 và 66-67: đổi thành `Đường A (7/13: access company devices iam places playback video) … Đường B (2/13: camera devices) … 4 feature chưa gọi BE (alerts events live search — mock)`; lệnh đo: `for f in apps/web/src/features/*/; do echo \"$(basename $f) $(grep -rlE '@/libs/(gateway|brm|cmi|device-api|media-manager|cloud-mngt)' $f --include='*.ts' --include='*.tsx' | wc -l)\"; done`. Sửa cùng số ở AGENTS.md:14-15 và fe-architecture/SKILL.md:18-19 (giữ kết luận \"mặc định đường A\")."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "AGENTS.md",
+"line": 19,
+"claim": "`@cap/api-client` mặc định `localhost:3001` — di sản, KHÔNG phải địa chỉ backend.",
+"evidence": "`grep -rn 3001 packages/api-client/src packages/api-client/package.json` → rỗng. `ApiClientConfig.baseUrl: string` (client.ts:31) là bắt buộc, không có default. `grep -rn 3001 apps packages --include='*.ts' --include='*.tsx'` → default nằm ở caller: `apps/web/src/libs/Env.ts:8,40`, `apps/web/next.config.ts:8`, `apps/web/src/features/camera/actions.ts:11`, `apps/desktop/src/renderer/main.tsx:13`, `apps/mobile/app/_layout.tsx:11`.",
+"problem": "Fact số 4 của AGENTS.md chỉ sai package. Agent đi tìm default trong `@cap/api-client` để gỡ sẽ không thấy, còn 5 chỗ thật (đặc biệt `features/camera/actions.ts` — chính đường B) thì không ai biết. Cùng câu ở `docs/architecture.md:136`.",
+"fix": "AGENTS.md dòng 19: `**`localhost:3001` là di sản ở caller, KHÔNG phải backend** — `libs/Env.ts` (API_URL), `next.config.ts` rewrite, `features/camera/actions.ts`, mobile `_layout.tsx`, desktop `main.tsx`; `@cap/api-client` không có default, baseUrl bắt buộc.` Sửa tương tự docs/architecture.md dòng 136."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "docs/architecture.md",
+"line": 85,
+"claim": "13 page mở đầu bằng `requireSession()` + `requireRoute('<key>')`.",
+"evidence": "`find 'app/[locale]/(dashboard)' -name page.tsx | wc -l` → 14. `grep -l requireRoute` trên 14 file → 12 (thiếu: `access-debug`, `permissions`). `grep -l requireSession` → 4 (groups, roles, permissions, structure). `requireRoute` → `requireAction` → `checkAction` → `getAccessProfile()` → `requireSession()` (`features/access/guard.ts:22-40`, `profile.ts:75`) nên 10 page chỉ gọi `requireRoute` vẫn có session ngầm.",
+"problem": "Số 13 và mô tả \"mở đầu bằng cả hai\" không khớp code: 14 page, chỉ 4 gọi `requireSession` tường minh, 2 không gọi `requireRoute`. `fe-architecture/SKILL.md:67-68` (\"13 page đang làm đúng thế\") và `access-control/SKILL.md:55` kê thành luật; agent sẽ \"sửa\" 10 page thêm `requireSession` thừa, hoặc coi 2 page miễn gác là lỗi.",
+"fix": "docs/architecture.md dòng 85: `14 page dưới (dashboard); 12 gọi requireRoute('<key>') (requireRoute đã ngầm requireSession qua getAccessProfile); 2 page action:null trong registry (access-debug, permissions) tự gác. requireSession() tường minh chỉ cần khi page dùng session.token/tenantId trực tiếp (4 page IAM).` fe-architecture/SKILL.md dòng 67-68 và access-control/SKILL.md dòng 55: đổi \"LUÔN requireSession() rồi requireRoute()\" thành \"requireRoute() (đã bao session); thêm requireSession() chỉ khi cần token/tenantId\"."
+},
+{
+"severity": "medium",
+"category": "coverage",
+"file": "docs/architecture.md",
+"line": 125,
+"claim": "Bảng `libs/`: `brm.ts` `cmi.ts` `device-api.ts` `media-manager.ts` | Client từng backend — không có `cloud-mngt.ts`, `log-buffer.ts`.",
+"evidence": "`ls apps/web/src/libs` → có thêm `cloud-mngt.ts` (export `cloudMngtClient(token)`, dùng ở `features/playback/actions.ts`) và `log-buffer.ts` (`bufferingSink`, dùng ở `app/[locale]/layout.tsx`, `app/api/debug/logs/route.ts`, `components/debug/ApiLogConsole.tsx`). `api-client/src/client.ts:801-821`: có 4 helper bóc envelope `rd` (customer-uac, OK=200), `rdi` (IAM, 1200), `rdm` (devicemanagement), `rdc` (cloud-mngt, `CLOUD_OK = 1200`).",
+"problem": "Bảng \"mỗi file là một chỗ duy nhất\" thiếu một client backend thật → agent cần cloud-mngt sẽ dựng lại. `.claude/skills/api-contract/SKILL.md:19` gộp \"customer-uac / cloud-mngt\" chung một dòng với lỗi `code_status≠200`, nhưng code nói cloud-mngt OK là **1200** (dùng `rd` cho cloud-mngt thì mọi lượt thành công ném ApiError — comment tại client.ts:810). Bảng \"Chọn client nào\" (dòng 50-57) cũng không có cloud-mngt; dòng 26 chỉ kể `rd()`/`rdi()`.",
+"fix": "docs/architecture.md dòng 125: thêm `cloud-mngt.ts` vào ô client (\"BRM/CMI/RDM/media-manager/cloud-mngt\"), thêm dòng `log-buffer.ts | vòng đệm log HTTP cho /api/debug/logs (SSE) | —`. api-contract/SKILL.md: tách dòng 19 thành hai: `customer-uac: {code_status, result, data}, OK code_status=200 → rd()` và `cloud-mngt: cùng shape, OK code_status=**1200** → rdc(), client libs/cloud-mngt.ts`; dòng 26 liệt kê đủ `rd/rdi/rdm/rdc`; bảng dòng 50-57 thêm hàng `cloud-mngt (băng ghi cloud playback) | cloudMngtClient() | cloudMngt`."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/api-contract/SKILL.md",
+"line": 21,
+"claim": "BRM-V2 trực tiếp | body thẳng, không envelope | `{code, error, details}` … | `brmClient()` (`@cap/brm`) — trong khi `docs/fe-kit/notes/gokit-contract.md:70` ghi BRM-V2 success = `{code: 1200, data}`.",
+"evidence": "`packages/brm/src/client.ts:208-209`: `if (body && typeof body === 'object' && 'data' in body) return body.data; return body as T;` — client chấp nhận CẢ body thẳng lẫn `{data}`. `apps/web/src/libs/gateway.ts:28-31` (comment): \"ba endpoint này bóc envelope IAM `{code, message, data}`, còn @cap/brm đọc thẳng body… chưa hợp nhất được cho tới khi xác nhận được BRM sau gateway trả shape nào\".",
+"problem": "Hai tài liệu cùng gói fe-kit mô tả BRM-V2 hai kiểu trái nhau; code thì \"cả hai\". Agent theo skill sẽ bỏ `data`, theo notes sẽ bắt `code===1200` — cả hai đều lệch client thật.",
+"fix": "api-contract/SKILL.md dòng 21: đổi ô Success thành `body thẳng HOẶC {data} — @cap/brm tự bóc data nếu có (brm/client.ts, nhánh 'data' in body); chưa xác nhận shape cuối sau gateway (gateway.ts đầu file)`. gokit-contract.md dòng 70: sửa ô thành cùng câu, bỏ `{code: 1200, data}`."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "docs/access-control.md",
+"line": 45,
+"claim": "Cả hai [permissions, tree] đi qua `gatewayClient()` (`apps/web/src/libs/gateway.ts`).",
+"evidence": "`grep -n 'brmApiClient\\|gatewayClient' apps/web/src/features/access/profile.ts apps/web/src/features/access/resource-index.ts` → `profile.ts:53 brmApiClient(session.token).enterprise.myPermissions(...)`, `resource-index.ts:74 brmApiClient(session.token).enterprise.resourceTree(...)`. `gateway.ts:33-45`: `brmApiClient` base = `getBrmBaseUri()` chỉ header Language; `gatewayClient` base = `apiGateway` + Origin/Referer/Gis/Package. Comment gateway.ts:23-24: \"gọi thẳng gateway root sẽ 404\".",
+"problem": "Sai tên client: dùng `gatewayClient()` cho permissions/tree là gọi sai base URI (404) và gửi thừa bộ header customer-uac — đúng bẫy api-contract cảnh báo (\"lệch một header là 403 khó truy\"). `access-control/SKILL.md:12-14` không nói client nên chưa lệch.",
+"fix": "docs/access-control.md dòng 45: `Cả hai đi qua brmApiClient() (apps/web/src/libs/gateway.ts, base getBrmBaseUri(), chỉ Authorization+Language) — KHÔNG phải gatewayClient() (đó là customer-uac).`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "docs/tech-debt.md",
+"line": 32,
+"claim": "`packages/api-client/package.json` có `@trpc/client` + `@trpc/server` trong dependencies nhưng không import — dead dependency; và (dòng 33) api-client import `@cap/types` nhưng không khai báo trong package.json.",
+"evidence": "`grep -n trpc packages/api-client/package.json` → rỗng; `grep -rn trpc packages/api-client/src` → rỗng. `grep -n '\"@cap/' packages/api-client/package.json` → `@cap/types`, `@cap/config`, `@cap/logger` đều `workspace:*`. `docs/architecture.md:39` cũng đo bằng package.json ra `api-client → types config logger`.",
+"problem": "Hai mục nợ đã trả xong vẫn nằm trong danh sách \"đừng sửa mà không hỏi\"; người đọc mất thời gian kiểm hoặc đi hỏi về thứ không còn tồn tại, và mâu thuẫn với architecture §2.",
+"fix": "Xoá hai gạch đầu dòng ở dòng 32-33, hoặc đổi thành `~~…~~ **ĐÃ GỠ** (kiểm: grep -n trpc packages/api-client/package.json → rỗng; @cap/types đã khai workspace:*)` theo kiểu mục darkAlgorithm dòng 21."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 118,
+"claim": "Quy ước nhánh/commit/MR của repo này: chưa có skill (`git-flow` nằm trong kế hoạch `docs/fe-kit/01-plan-skills.md`, mục S4). Hiện commit dùng hai dạng lẫn nhau … — hỏi user nếu cần chọn.",
+"evidence": "`ls .claude/skills/` → có `git-flow/` (SKILL.md 125 dòng + references/flow.md). `docs/fe-kit/01-plan-skills.md:3` → \"XONG 11/11\"; SKILL.md của chính jira dòng 33 và 57 đã trỏ \"Chi tiết: skill `git-flow`\".",
+"problem": "Mục \"Liên quan\" tự mâu thuẫn với phần thân skill và bảo agent \"hỏi user\" cho việc git-flow đã quyết (dạng đa số `type(scope):`, `[RPA-xxxx]` chỉ khi user yêu cầu — git-flow/SKILL.md:41-42). Agent nạp skill jira sẽ hỏi lại thứ đã có luật.",
+"fix": "Thay dòng 118-120 bằng: `- Quy ước nhánh/commit/MR: skill \\`git-flow\\` + \\`CONTRIBUTING.md\\`.`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "AGENTS.md",
+"line": 29,
+"claim": "logger — log có cấu trúc, redact secret — leaf — nơi DUY NHẤT được gọi console.*; CONTRIBUTING.md:166 \"không `console.*` ngoài `packages/logger/src/sinks.ts`\".",
+"evidence": "`grep -rlE 'console\\.(log|warn|error|info|debug)\\(' apps packages --include='*.ts' --include='*.tsx' --exclude-dir=node_modules | grep -v packages/logger | grep -v test` → 5 file, 14 lời gọi: `features/access/profile.ts:86-89` (ACCESS_DEBUG dump), `components/debug/ApiLogConsole.tsx:75-80` (debug console), `packages/core/src/entities/access-profile.ts:26 console.warn`, `features/iam/groups-accounts/GroupsAccountsPageClient.tsx:191 console.error`, `UserConfigModal.tsx:184,200 console.error`. `.oxlintrc.json` không có rule `no-console`.",
+"problem": "\"DUY NHẤT\" là khẳng định tuyệt đối nhưng sai ở 5 file và không có lint gác; checklist MR (CONTRIBUTING §5) bảo kiểm thứ không ai đo. Hai chỗ debug là có chủ ý (dump theo cờ), ba chỗ iam/core là vi phạm thật.",
+"fix": "AGENTS.md dòng 29: `nơi duy nhất ĐƯỢC PHÉP console.* ngoài debug có cờ (ACCESS_DEBUG dump, ApiLogConsole)`. CONTRIBUTING.md dòng 166: thêm lệnh đo `grep -rlE 'console\\.(log|warn|error)\\(' apps packages --include='*.ts*' --exclude-dir=node_modules | grep -vE 'logger|debug|access/profile.ts|test'` và ghi 3 chỗ còn vi phạm (core/access-profile.ts:26, GroupsAccountsPageClient.tsx:191, UserConfigModal.tsx:184,200) vào docs/tech-debt.md, hoặc thêm `\"no-console\": \"error\"` vào `.oxlintrc.json` rules với `allow` cho 2 file debug."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "docs/ui-antd.md",
+"line": 19,
+"claim": "cả `apps/web` + `packages/ui` hiện chỉ có **một** khai báo `transition` (`features/access/PersonaSwitcher.tsx`); (dòng 24) \"Có 35 component đã pin token\"; (dòng 91-96) tham chiếu `antd-theme.ts:428` Pagination, `:806` Tree, `:650` Tabs, `:274` Checkbox, `:1075` Input, `:153` Button.",
+"evidence": "`grep -rnE 'transition[:=]|\\btransition:' apps/web/src packages/ui/src --include='*.ts' --include='*.tsx' | grep -viE 'view.?transition|\\.test\\.'` → 22 dòng / 13 file (PersonaSwitcher, AlertListPanel, PlaybackControlBar, LiveTile, LiveControlBar, CreateViewWizard, DeviceItem, ActionIconButton, Snackbar, AppTopBar, SlidePanel, AppNavRail, css-overrides.ts). `awk '/components: \\{/{f=1} f && /^ {4,6}[A-Z][A-Za-z]+: \\{/{c++} END{print c}' packages/ui/src/theme/antd-theme.ts` → 39. `sed -n '428p;806p;650p;274p;1075p;153p' antd-theme.ts` → toàn comment/`borderColor`/`inkBarColor`; vị trí thật: Button:200, Checkbox:329, Pagination:535, Tabs:800, Tree:1027, Input:1351.",
+"problem": "Ba số đo lỗi thời trong cùng file: \"một transition\" là lý lẽ cho luật antd-first nhưng đã 22; \"35\" lặp 3 lần ở `ui-antd/SKILL.md:13,24,98`; số dòng chết vi phạm luật 4 của figma-pipeline (\"trích bằng symbol\") và traps.md 08-18 (\"8/50 anchor chết\").",
+"fix": "docs/ui-antd.md dòng 19-20 và ui-antd/SKILL.md dòng 18-19: bỏ câu \"chỉ có một khai báo transition\", thay bằng \"đo 2026-09-04: 22 khai báo/13 file, phần lớn theo `motion.duration.*`\" hoặc xoá lý lẽ này. Dòng 24 + SKILL.md 13/24/98: `35` → `39` kèm lệnh awk trên. Bảng dòng 91-96: thay `antd-theme.ts:428` bằng `antd-theme.ts` khối `Pagination:` (tương tự Tree/Tabs/Checkbox/Input/Button)."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/git-flow/references/flow.md",
+"line": 32,
+"claim": "Backtest hook trên 60 commit đó: **56 đạt / 4 chặn** — 3 sai format + 1 dài 124 ký tự; CONTRIBUTING.md:143-144 cùng phép đo ghi **57 đạt, 3 không**; CONTRIBUTING.md:121 \"chỉ 2 cái vượt 100\", p90 84.",
+"evidence": "Tái lập trên 60 commit no-merge trước 2026-09-03 12:00 (`git log --no-merges --until='2026-09-03 12:00' -60 origin/development`), chạy `bash .githooks/commit-msg` từng message → **53 đạt / 7 chặn**: 3 sai format (`[+] add debug tag`, `fit(iam) feat(iam)…`, `feature/playback`), 1 thiếu dấu hai chấm (`feat(iam) sửa lỗi gán vai trò`), **3 dài >100** (124, 104, 107 ký tự — hai cái sau kết bằng `(RPA-3957)`). p50 67, p90 90, [KEY] 8/60, `type(scope):` không key 47/60 (doc: 52). Trên 60 commit hiện tại: 54/6, [KEY] 12/60, p90 92.",
+"problem": "Hai file cùng ngày cùng phép đo ra hai kết quả khác nhau (57/3 vs 56/4), và không kết quả nào tái lập được; \">100 chỉ 2\" sai (3). Đây là tài liệu tự nhận \"kèm lệnh để đo lại\" nên số lệch làm mất tin cả bảng.",
+"fix": "Chốt một bộ số bằng lệnh có mốc cố định: `git log --no-merges --format='%s' c58b7a5~60..c58b7a5` (ghi sha) → 53/7, 3 vượt 100, p50 67 p90 90; ghi cùng số vào CONTRIBUTING.md dòng 120-121, 143-144 và flow.md dòng 29-33. Hoặc bỏ số tuyệt đối, chỉ giữ lệnh đo + kết luận (\"đa số vượt 100 là commit gộp việc\")."
+},
+{
+"severity": "medium",
+"category": "consistency",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 106,
+"claim": "Đụng ranh giới RSC/client, route, hoặc prop server→client thì phải chạy thêm: `ACCESS_MOCK= pnpm --filter web build`.",
+"evidence": "`.claude/skills/figma-build/SKILL.md:56-60`: \"**KHÔNG chạy `pnpm build`.** … Chỉ build khi người dùng yêu cầu… kiểm `ss -ltnp | grep :3000` trước\"; `figma-verify/SKILL.md:85-90` cùng luật; `traps.md` dòng 08-14 và 08-24 (\"HAI lần trong một phiên… dev server trả 404 cho MỌI route\"). AGENTS.md:54 và git-flow/SKILL.md:109 lặp lệnh build.",
+"problem": "Hai bộ skill cùng kích hoạt trong một việc dựng UI (fe-architecture + figma-build) ra lệnh trái nhau về `pnpm build`; tài liệu chính thức (code.claude.com/docs/en/memory §Consistency) nói khi hai luật mâu thuẫn Claude chọn tuỳ ý — và traps.md ghi hậu quả thật.",
+"fix": "fe-architecture/SKILL.md dòng 106-112 (và AGENTS.md:54, git-flow/SKILL.md:109): thêm điều kiện `Chỉ tự chạy build khi lsof -ti:3000 rỗng (không có dev server); nếu đang chạy thì ĐỀ XUẤT user chạy — xem traps.md 08-24`. figma-build dòng 59 và traps.md 08-24: đổi `ss -ltnp | grep :3000` → `lsof -ti:3000` (`which ss` trên máy này → not found; `lsof` có)."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/figma-pipeline/references/pages/iam.md",
+"line": 18,
+"claim": "Feature module: `apps/web/src/features/authz/` (`groups-accounts/`, `roles/`, `members/`, `structure/`).",
+"evidence": "`ls apps/web/src/features/authz` → No such file; `ls apps/web/src/features/iam` → groups-accounts roles members structure password vms … (13 feature không có `authz`).",
+"problem": "Đây là dòng loại B (\"tin tới khi design đổi\") nên agent sẽ dùng thẳng đường dẫn sai; `iam-password.md:5,35-36` cũng ghi `features/authz/password/…` cho file MỚI.",
+"fix": "iam.md dòng 18: `features/authz/` → `features/iam/` (thêm `password/`, `vms/`). iam-password.md dòng 5, 35, 36: `features/authz/password/` → `features/iam/password/`."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/figma-pipeline/references/pages/iam-password.md",
+"line": 4,
+"claim": "Route thật: `…/(dashboard)/password-policy/` (route MỚI — chưa có). Feature module … (chưa có). Bảng: Password | … | Spec DUYỆT, CHƯA build.",
+"evidence": "`ls 'apps/web/src/app/[locale]/(dashboard)/password-policy/page.tsx'` → tồn tại; `ls apps/web/src/features/iam/password/` → PasswordPolicyForm.tsx, PasswordPolicyPageClient.tsx, actions.ts, data.ts, realm-policy.ts, policy-payload.ts + test. `routes.ts:201` có key `password-policy`. Commit `feat(iam): nối API chính sách mật khẩu + gác quyền view/setup` là ví dụ ✅ trong CONTRIBUTING.md:110.",
+"problem": "Trạng thái journey và 3 dòng \"chưa có\" đã lỗi thời; agent theo `figma-build` sẽ coi màn này chưa dựng và dựng lại/hỏi duyệt lại. Khoảng trống 1-2 (\"BRM không có API password-policy\", \"chưa có action gác route\") cũng cần xét lại vì code đã có `actions.ts` + realm-policy.",
+"fix": "Dòng 4-5: bỏ \"(route MỚI — chưa có)\"/\"(chưa có)\", ghi đường dẫn thật `features/iam/password/`. Bảng dòng 13: `Spec DUYỆT, CHƯA build` → `ĐÃ build (kiểm: ls features/iam/password) — chưa verify` (hoặc ngày verify nếu có coverage.md). Mục Khoảng trống: giữ dòng cũ (loại C) nhưng thêm dưới mỗi dòng `→ trạng thái 2026-09-04: …` theo đúng quy ước \"không xoá loại C\"."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/figma-pipeline/references/pages/login.md",
+"line": 101,
+"claim": "⛔ Chờ BE: endpoint kiểm mã doanh nghiệp. Cắm qua `COMPANY_ID_LOOKUP_URL` (`apps/web/src/libs/Env.ts` + `.env.example`); chỗ gọi duy nhất là `verifyCompanyIdAction`… Trống ⇒ bỏ qua bước kiểm. (Dòng 55, 57: `CompanyIdForm.tsx` (chưa có), `AppDownloadLinks.tsx` (chưa có).)",
+"evidence": "`grep -n COMPANY_ID_LOOKUP_URL apps/web/src/libs/Env.ts .env.example apps/web/.env.example` → rỗng. `features/auth/actions.ts:63-76`: `verifyCompanyIdAction` gọi `companyStatusUrl(normalized, getEndpoints().iamV2BaseUri)` (iam-v2 `/realms/{r}/status`), \"Thiếu iamV2BaseUri — bỏ qua bước kiểm\". `ls features/auth/components/` → CompanyIdForm.tsx, AppDownloadLinks.tsx tồn tại (AuthBanner.tsx đã xoá đúng như dòng 94-96).",
+"problem": "Biến env và cơ chế được mô tả không tồn tại; agent debug màn Company ID sẽ đi tìm `COMPANY_ID_LOOKUP_URL`. Hai \"(chưa có)\" lỗi thời.",
+"fix": "Dòng 101-104: thay bằng `Kiểm mã doanh nghiệp = GET {iamV2BaseUri}/realms/{code}/status (features/auth/company-id.ts, verifyCompanyIdAction); thiếu iamV2BaseUri → bỏ qua. Không còn COMPANY_ID_LOOKUP_URL.` Dòng 55, 57: bỏ \"(chưa có)\"."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/figma-pipeline/references/pages/management-camera-gateway.md",
+"line": 77,
+"claim": "⚠ Nửa Gateway không có gì trong repo lẫn RDM: `DeviceType = camera|nvr|vms`, `CreateDeviceInput` không có giao thức/IP/gateway, không có API Gateway nào. Đây là domain mới hoàn toàn.",
+"evidence": "`ls apps/web/src/features/devices/gateway/` → actions.ts mock.ts types.ts view.ts view.test.ts; `grep -nE 'bulkRemove|gatewaysBase' packages/api-client/src/client.ts` → có `gatewaysBase(enterpriseId)` (client.ts:~829) và `gateways.bulkRemove` (docs/device-rdm.md:64 mô tả hợp đồng đã đo). `DeviceType = 'camera' | 'nvr' | 'vms'` (dto.ts:52) vẫn đúng.",
+"problem": "Dòng ⚠ loại C (đúng lúc viết 08-24) nay đọc như hiện trạng: agent sẽ tưởng phải dựng domain Gateway từ đầu trong khi `features/devices/gateway/` + API gateways đã có. File quy ước không xoá loại C nên cần ghi tiếp trạng thái.",
+"fix": "Giữ dòng 77-79, thêm ngay dưới: `→ 2026-09-04: đã có features/devices/gateway/{actions,view,types}.ts và api-client gateways.* (GET/PATCH/bulkRemove — hợp đồng ở docs/device-rdm.md); DeviceType vẫn camera|nvr|vms.`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/livestream/SKILL.md",
+"line": 11,
+"claim": "Luật 1 — mọi chỗ xem camera đi qua `useCameraStream`… Code: `features/video/` · `features/live/` · `features/playback/`.",
+"evidence": "`grep -rl usePlaybackVideo apps/web/src` → `features/playback/usePlaybackVideo.ts`, `components/PlaybackViewer.tsx`, `components/PlaybackWorkspace.tsx`. `usePlaybackVideo.ts:6`: \"KHÔNG dùng lại `useHlsStream` của màn Trực tiếp, dù cùng là hls.js\" — hook hls.js riêng cho VOD, không qua `useCameraStream`. `PlaybackViewer.tsx:350` đồng thời dùng `useCameraStream` (nhánh Trực tiếp).",
+"problem": "Skill kê `features/playback` vào phạm vi rồi tuyên bố \"MỌI chỗ\"; agent sẽ coi `usePlaybackVideo` là vi phạm luật 1 và gộp vào lõi, ngược với chủ ý ghi trong chính file đó. `docs/livestream.md:8` cùng câu.",
+"fix": "livestream/SKILL.md dòng 11-14 (và docs/livestream.md dòng 8-10): thêm câu `Ngoại lệ có chủ ý: băng ghi VOD của Xem lại dùng hook riêng features/playback/usePlaybackVideo.ts (hls.js seek/VOD, không phải luồng camera sống) — xem comment đầu file đó.`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": ".claude/skills/fe-architecture/SKILL.md",
+"line": 55,
+"claim": "Chỉ dùng route handler (`app/api/*`) khi cần ghi cookie, giữ client_secret, hoặc nhận redirect — hiện có 7 cái, đều là auth / chọn công ty / export.",
+"evidence": "`find apps/web/src/app/api -name route.ts` → 8: auth/{login,callback,logout,refresh}, company/{auto,reset}, device-export, **debug/logs** (SSE stream log BFF, gác bằng `API_LOG_CONSOLE=1`).",
+"problem": "Sai số và sai phân loại: `debug/logs` không thuộc ba lý do được phép; luật \"chỉ dùng khi…\" đang bị chính code vi phạm hoặc thiếu lý do thứ 4 (stream/SSE).",
+"fix": "Dòng 54-55: `…hoặc **stream/SSE** (không làm được bằng Server Action). Hiện có 8: 4 auth, 2 company, device-export, debug/logs.`"
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "README.md",
+"line": 74,
+"claim": "# apps/web/.env.local: `API_URL=http://localhost:3001  # External REST API base URL`; mobile `EXPO_PUBLIC_API_URL=http://localhost:3001`.",
+"evidence": "`grep -vE '^#|^$' apps/web/.env.example | head` → `APP_ENV=beta`, `OIDC_CLIENT_SECRET=`, `GATEWAY_GIS=`, `ACCESS_MOCK=multi-role`…; `API_URL` chỉ còn ở dòng 65 dạng comment `# API_URL=…`. `packages/config/src/environments.ts:9-10`: \"đặt APP_ENV=prod|beta|uat… Mặc định uat\". `docs/architecture.md:131-134` gọi environments.ts là nguồn duy nhất của endpoint. `apps/mobile/src/libs/Env.ts:3` default `localhost:3000`, không phải 3001.",
+"problem": "README dạy biến env không còn dùng và bỏ qua biến thật (`APP_ENV`, `OIDC_CLIENT_SECRET`); người mới set `API_URL` sẽ không đổi được endpoint nào.",
+"fix": "Thay khối dòng 72-80 bằng: `cp apps/web/.env.example apps/web/.env.local` rồi điền `APP_ENV=uat|beta|prod` (chọn bộ endpoint — packages/config/src/environments.ts), `OIDC_CLIENT_SECRET`, `GATEWAY_GIS`; bỏ `ACCESS_MOCK` khi build. Mobile: `EXPO_PUBLIC_APP_ENV`. Xoá dòng API_URL."
+},
+{
+"severity": "medium",
+"category": "accuracy",
+"file": "README.md",
+"line": 88,
+"claim": "Web | `httpOnly Cookie` | `loginAction()` → set cookie → redirect; (dòng 92) **Production:** thay thế dev session bằng Keycloak / Auth0 / AWS Cognito trong `apps/web/src/libs/auth.ts`.",
+"evidence": "`features/auth/actions.ts:15-17`: `loginAction() { redirect('/api/auth/login'); }` — comment \"Đăng nhập giờ đi qua SSO\". Cookie set ở `/api/auth/callback` (`setTokenCookies`, docs/auth-sso.md:17). `libs/auth.ts:2,36`: \"verify session bằng OIDC access_token qua JWKS\", `verifyToken(token, {issuer, jwksUri})` — Keycloak đã là production auth (docs/auth-sso.md:6 \"BE xác nhận 2026-08-19\").",
+"problem": "README mô tả web như còn \"dev session\" cần thay bằng Keycloak, trong khi Keycloak SSO đã chạy; ai đọc sẽ tưởng auth chưa làm hoặc đi sửa `libs/auth.ts`.",
+"fix": "Dòng 88: `Web | httpOnly cookie (5 khoá, libs/session-cookies.ts) | loginAction() → /api/auth/login (OIDC PKCE, Keycloak realm = mã doanh nghiệp) → /api/auth/callback set cookie`. Xoá dòng 92, thay bằng `Chi tiết: docs/auth-sso.md`."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "CONTRIBUTING.md",
+"line": 99,
+"claim": "`type` ∈ `feat | fix | refactor | test | docs | chore | perf | ci` (8 loại); dòng 148: \"đổi luật ở đây và ở hook\".",
+"evidence": "`.githooks/commit-msg:20`: `TYPES='feat|fix|refactor|test|docs|chore|perf|ci|build|style|revert'` (11). Test: `printf 'build(ci): thêm bước build web vào pipeline\\n' > m && bash .githooks/commit-msg m` → rc=0 (PASS), tương tự `style`, `revert`. `git-flow/SKILL.md:38` cũng liệt kê 8.",
+"problem": "Doc và hook đã lệch đúng chỗ CONTRIBUTING dặn phải giữ khớp; agent theo skill sẽ báo `build:`/`style:` là sai type dù hook cho qua.",
+"fix": "CONTRIBUTING.md dòng 99 và git-flow/SKILL.md dòng 38: thêm `build | style | revert` (hoặc bỏ 3 loại khỏi hook nếu không muốn dùng) — chọn một, sửa cả ba chỗ."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": ".claude/skills/jira/SKILL.md",
+"line": 26,
+"claim": "Đủ 14 lệnh (gồm `story`, `sprint`, `sprints`, `worklog`, `summary`, `task`, `me`, `whoami`): `references/lenh.md`.",
+"evidence": "`grep -cE '^  [a-z]+\\)' .claude/skills/jira/jira.sh` → 16 (me whoami key view comment summary point describe task story sprint sprints subtask worklog transitions transition); `grep -cE '^bash .claude/skills/jira/jira.sh' references/lenh.md` → 16. 8 lệnh liệt kê ở khối trên + 8 trong ngoặc = 16.",
+"problem": "Số đếm sai ngay trong câu tự cộng; nhỏ nhưng là skill vừa siết luật \"đo trước khi khẳng định\".",
+"fix": "Dòng 26: `Đủ 14 lệnh` → `Đủ 16 lệnh`."
+},
+{
+"severity": "low",
+"category": "script",
+"file": ".claude/skills/jira/jira.sh",
+"line": 186,
+"claim": "`\"\"|-h|--help|help) sed -n '2,32p' \"$0\" ;;` — in phần hướng dẫn đầu file.",
+"evidence": "`bash .claude/skills/jira/jira.sh help | tail -8` → in cả `set -euo pipefail`, `if [ -z \"${FCAM_JIRA_PAT:-}\" ]; then`, `set -a`, `[ -f ./.jira.env ] && . ./.jira.env`… Khối comment header kết thúc ở dòng 25 (dòng 26 là `set -euo pipefail`); bản repo thêm 2 dòng \"Nguồn gốc\" so với gokit nên trượt thêm.",
+"problem": "Help lộ 7 dòng code, gây nhiễu cho người mới chạy `jira help` theo CONTRIBUTING §6.",
+"fix": "Dòng 186: thay `sed -n '2,32p' \"$0\"` bằng `awk 'NR>1 && !/^#/{exit} NR>1{sub(/^# ?/,\"\");print}' \"$0\"` (in tới dòng comment cuối). Sync cùng sửa sang `b2b-gokit/.claude/skills/git-flow/jira.sh` theo luật ở dòng 21."
+},
+{
+"severity": "low",
+"category": "redundancy",
+"file": "docs/auth-sso.md",
+"line": 10,
+"claim": "Dòng 10-12 lặp lại tiêu đề `# Auth — SSO OIDC/Keycloak (web)` và blockquote \"Nguồn chân lý đầy đủ. Code: packages/auth/ …\" đã có ở dòng 1-4.",
+"evidence": "`grep -n '^# Auth — SSO\\|^> Nguồn chân lý' docs/auth-sso.md` → dòng 1, 3, 10, 12 — hai H1 giống hệt, hai blockquote gần giống (một ghi \"(phiên, cookie, refresh) + app/api/auth/*\", một ghi \"(phiên, cookie)\").",
+"problem": "Hai H1 trong một file 46 dòng, nội dung dẫn lệch nhau nhẹ — dấu vết ghép file khi tách AGENTS.md (progress.md W1).",
+"fix": "Xoá dòng 10-14 (H1 + blockquote + 2 dòng trống), giữ bản dòng 1-4 (đầy đủ hơn)."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "docs/ui-antd.md",
+"line": 99,
+"claim": "Còn lại themed mà chưa dùng ở page nào… (dùng được ngay khi cần): `Radio`, `Segmented`, `Collapse`, `Slider`, `Layout`, `Statistic`, `Steps`, `Upload`, `Result`, `Breadcrumb`, `Progress`, `List`, `Popover`, `Message`, `Calendar`, `Cascader`, `Transfer`, `DatePicker`. (Lặp ở ui-antd/SKILL.md:31-33.)",
+"evidence": "Script python quét `import {…} from 'antd'` + `<X` trong apps/web/src (không test): Radio 1 file, Segmented 2, Slider 3, Statistic 2, Steps 2, Upload 1, Popover 1, DatePicker 5 — 8/18 đã dùng (vd `GroupWizardModal.tsx`, `AddDeviceModal.tsx`, `ExportVideoModal.tsx`). Chưa dùng: Collapse Layout Result Breadcrumb Progress List Message Calendar Cascader Transfer.",
+"problem": "Danh sách \"chưa dùng\" lỗi thời gần nửa; vô hại về hành vi nhưng là số đo ghi sai trong doc tự nhận đo được.",
+"fix": "docs/ui-antd.md dòng 99-102 và ui-antd/SKILL.md dòng 31-33: rút còn 10 tên chưa dùng (Collapse Layout Result Breadcrumb Progress List Message Calendar Cascader Transfer), kèm ghi ngày đo; hoặc xoá danh sách và chỉ giữ lệnh `grep -rlE \"<(Collapse|Layout|…)[ >]\" apps/web/src`."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "docs/architecture.md",
+"line": 176,
+"claim": "tsconfig per-package: mỗi package có `tsconfig.json` riêng, `include: [\"src\"]`; (dòng 78) 121 file `'use client'`, 20 file `'use server'`; (dòng 160) 73 file test; (dòng 108-110) LOC `iam` 6.9k · `playback` 5k.",
+"evidence": "`ls packages/types/tsconfig.json packages/validators/tsconfig.json` → No such file (8/10 có). `grep -rlE \"^'use client'\" apps/web/src | wc -l` → 136; `'use server'` → 17. `find apps packages -name '*.test.ts*' -not -path '*/node_modules/*' | wc -l` → 78 (web 60, core 11, auth 5, brm 1, logger 1). LOC không test: iam 8027, playback 5788, live 8562 (doc 8.3k).",
+"problem": "Bốn số đo trong file \"mọi con số đo được\" đã lệch sau một ngày (13 commit từ 2026-09-03); riêng tsconfig là sai định tính (2 package leaf không có tsconfig, cũng không có `type-check` — tech-debt chỉ nêu hooks).",
+"fix": "Dòng 176: `8/10 package có tsconfig.json include:[\"src\"] — types, validators không có (và không có script type-check)`. Dòng 78, 108-110, 160: ghi kèm lệnh đo (`grep -rlE \"^'use client'\" apps/web/src | wc -l`; `find … -name '*.test.ts*' | wc -l`) và đóng dấu ngày, hoặc bỏ số tuyệt đối."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "CONTRIBUTING.md",
+"line": 12,
+"claim": "`development` … 19/19 merge gần nhất vào đây; `bugfix/*` … 4 nhánh remote.",
+"evidence": "`git log --merges -19 --format='%s' origin/development | sed … | sort | uniq -c` → 13 vào 'development', 4 \"Merge remote-tracking branch 'origin/development' into feat/…\", 2 vào `feat/*`. `git branch -r | grep origin/bugfix/ | wc -l` → 5 (thêm `bugfix/RPA-4193-UAT-webfirt-20260903`). Lệnh đo tiền tố ở dòng 19 cũng cho `feat` 1, `fix` 1, `integrate` 1 không có trong bảng.",
+"problem": "Số trôi theo ngày; \"19/19\" không tái lập vì lệnh không loại back-merge.",
+"fix": "Dòng 12: thay số bằng lệnh `git log --merges -19 --format='%s' origin/development | grep -c \"into 'development'\"` + kết quả có ngày; dòng 15-16: bỏ số cứng, giữ lệnh dòng 19."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "docs/fe-kit/README.md",
+"line": 5,
+"claim": "1. Giai đoạn 1 — chuẩn hoá skill cho `camera-ai-platform` (đang làm)",
+"evidence": "`docs/fe-kit/01-plan-skills.md:3` → \"Trạng thái: **XONG 11/11** (2026-09-03)\"; `progress.md:120` → \"HOÀN TẤT GIAI ĐOẠN 1\".",
+"problem": "Trang mục lục của folder nói ngược trạng thái hai file nó liệt kê.",
+"fix": "Dòng 5: `(đang làm)` → `(xong 2026-09-03 — xem 01-plan-skills.md)`; dòng 8 giai đoạn 2 thêm `(chưa bắt đầu)`."
+},
+{
+"severity": "low",
+"category": "consistency",
+"file": "AGENTS.md",
+"line": 39,
+"claim": "Ranh giới từng package: `packages/README.md`.",
+"evidence": "`grep -n '@cap/ui' packages/README.md` → dòng 17 `@cap/ui (component + token)`, dòng 47 `component \"câm\" (Button), design token`, dòng 67 `component / token hiển thị`; trong khi AGENTS.md:35 và architecture.md:150 khẳng định `ui KHÔNG xuất component nào` (`find packages/ui/src -name '*.tsx'` → 0).",
+"problem": "AGENTS.md trỏ tới một file (ngoài phạm vi rà) mô tả `@cap/ui` trái với chính nó; agent đọc theo pointer sẽ tìm Button trong @cap/ui.",
+"fix": "Hoặc sửa `packages/README.md` dòng 17/47/67 thành \"token + antd theme, không component\", hoặc AGENTS.md dòng 39 ghi `packages/README.md (⚠ phần @cap/ui lỗi thời — tin AGENTS/architecture)`."
+},
+{
+"severity": "low",
+"category": "accuracy",
+"file": "README.md",
+"line": 54,
+"claim": "# Yêu cầu: Node.js ≥ 22.12, pnpm 9.12.x",
+"evidence": "`package.json` `engines.node` = `>=22 <25`. Memory dự án ghi node mặc định v26 trên máy dev vi phạm engines (cần PATH node@22 của brew).",
+"problem": "README bỏ trần `<25`; người cài Node 25/26 sẽ bị pnpm chặn mà README không báo trước.",
+"fix": "Dòng 54: `Node.js 22 hoặc 24 (engines: >=22 <25 — Node 25+ bị chặn), pnpm 9.12.x`."
+}
+]

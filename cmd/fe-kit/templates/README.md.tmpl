@@ -1,0 +1,64 @@
+# {{title}}
+
+Dựng trên [`fe-kit`](https://git.fpt.net/fli-backend/b2b-v2/fe-kit) v{{kitVersion}} —
+nền tảng: **{{platformList}}**.
+
+## Chạy
+
+```bash
+pnpm install
+cp .env.example .env.local     # điền OIDC_CLIENT_SECRET nếu dùng SSO
+pnpm dev
+```
+
+Web ở http://localhost:3000. Trang chủ công khai nên chạy được ngay, chưa cần IdP.
+
+## Ba file bạn sẽ sửa đầu tiên
+
+| File | Chứa gì |
+|---|---|
+| `shared/src/env.ts` | Bảng môi trường — **nguồn chân lý duy nhất** của endpoint |
+| `shared/src/tokens.ts` | Màu, spacing, font của sản phẩm |
+| `shared/src/api.ts` | Client gọi backend + các hàm gọi API |
+
+Kit không biết URL nào của bạn. Đổi môi trường bằng **một** biến `APP_ENV`
+(`uat` | `beta` | `prod`), không phải bằng cách sửa từng endpoint.
+
+## Lệnh
+
+```bash
+pnpm dev          # tất cả app song song
+pnpm build        # build tất cả
+pnpm lint         # oxlint
+pnpm type-check   # tsc --noEmit mọi package
+pnpm verify       # lint + type-check + build + test — cổng trước khi mở MR
+```
+
+> `type-check` **không** thay được `build`. Ranh giới server/client của Next,
+> typed routes và việc tuần tự hoá prop server→client chỉ lộ ra lúc build.
+
+## Kit cho gì
+
+| Subpath | Dùng để |
+|---|---|
+| `fe-kit/config` | `defineEnvironments` — bảng môi trường, override từng endpoint |
+| `fe-kit/http` | Client gokit: envelope `{data}`/`{data,page}`, RFC 9457, timeout, retry, 401 |
+| `fe-kit/auth` | OIDC Authorization Code + PKCE, JWKS, refresh có khoá chống đua |
+| `fe-kit/server` | Cookie phiên + middleware refresh cho Next (chỉ phía server) |
+| `fe-kit/access` | Chấm quyền đa vai trò, kế thừa theo cây resource |
+| `fe-kit/logger` | Log có cấu trúc, tự che token, block HTTP đọc được |
+| `fe-kit/ui` | Token giao diện → theme antd (web) |
+| `fe-kit/tokens` | Bảng token thuần — dùng được cả trên React Native |
+
+## Nâng cấp kit
+
+```bash
+pnpm up fe-kit@<tag-mới> -r && pnpm type-check
+```
+
+Pre-1.0: **minor là breaking**, patch là tương thích. Đọc CHANGELOG của kit trước.
+
+## Cho agent
+
+`CLAUDE.md` / `AGENTS.md` ở gốc, skill ở `.claude/skills/`. Ba skill đó **do kit
+phát hành** — sửa tại chỗ sẽ mất ở lần nâng cấp sau.

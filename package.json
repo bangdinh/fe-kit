@@ -1,0 +1,108 @@
+{
+  "name": "fe-kit",
+  "version": "0.1.0",
+  "description": "Bo kit frontend dung chung \u2014 web/mobile/desktop noi dung hop dong REST cua b2b-gokit. Moi du an ke thua thay vi copy khung.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "private": false,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "packageManager": "pnpm@12.4.1",
+  "bin": {
+    "fe-kit": "./cmd/fe-kit/index.js"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./types": {
+      "types": "./src/types/index.ts",
+      "default": "./src/types/index.ts"
+    },
+    "./config": {
+      "types": "./src/config/index.ts",
+      "default": "./src/config/index.ts"
+    },
+    "./logger": {
+      "types": "./src/logger/index.ts",
+      "default": "./src/logger/index.ts"
+    },
+    "./http": {
+      "types": "./src/http/index.ts",
+      "default": "./src/http/index.ts"
+    },
+    "./access": {
+      "types": "./src/access/index.ts",
+      "default": "./src/access/index.ts"
+    },
+    "./auth": {
+      "types": "./src/auth/index.ts",
+      "default": "./src/auth/index.ts"
+    },
+    "./server": {
+      "types": "./src/server/index.ts",
+      "default": "./src/server/index.ts"
+    },
+    "./ui": {
+      "types": "./src/ui/index.ts",
+      "default": "./src/ui/index.ts"
+    },
+    "./tokens": {
+      "types": "./src/ui/tokens.ts",
+      "default": "./src/ui/tokens.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "cmd",
+    "docs",
+    "README.md",
+    "STRUCTURE.md",
+    "ONBOARDING.md",
+    "CHANGELOG.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint src cmd --deny-warnings",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "new": "node ./cmd/fe-kit/index.js new"
+  },
+  "dependencies": {
+    "jose": "^6.2.12"
+  },
+  "peerDependencies": {
+    "antd": ">=6",
+    "next": ">=16",
+    "react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "antd": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "antd": "^6.6.3",
+    "next": "^16.3.5",
+    "oxlint": "^1.82.0",
+    "react": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}
