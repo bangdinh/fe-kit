@@ -173,7 +173,7 @@ Còn lại, có lý do để chưa làm:
 
 ### P1 — `@cap/logger` (thí điểm)
 
-Nhánh camera `feature/RPA-0000-fe-kit-logger-pilot` (worktree
+Nhánh camera `refactor/RPA-0000-fe-kit-logger-adapter` (worktree
 `../camera-ai-platform-fekit-pilot`, nền `origin/development`). Kết quả ở mục 7.
 
 1. `@cap/logger/src/index.ts` re-export `fe-kit/logger`, giữ `trace.ts`. Xoá 5 file trùng.
