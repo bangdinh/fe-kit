@@ -1,8 +1,8 @@
 // SINH TỰ ĐỘNG từ b2b-gokit contract/rest-contract.json — KHÔNG sửa tay.
-// Nguồn: b2b-gokit feature/rest-contract-export (chưa commit) (b92b0063a03681ba2b1bdb7a581f68e04bdcdbc5).
+// Nguồn: b2b-gokit v0.8.7 (7e746cc11a9285111dc88aeca884f2b8260adbc8).
 // Sinh lại: make contract-sync GOKIT_REF=<tag>. Lý do: docs/gokit-source-of-truth.md.
 
-export const GOKIT_CONTRACT_SOURCE = { ref: 'feature/rest-contract-export (chưa commit)', commit: 'b92b0063a03681ba2b1bdb7a581f68e04bdcdbc5' } as const;
+export const GOKIT_CONTRACT_SOURCE = { ref: 'v0.8.7', commit: '7e746cc11a9285111dc88aeca884f2b8260adbc8' } as const;
 
 /** Mã lỗi ổn định của gokit (`errors.Codes()`). */
 export const GOKIT_ERROR_CODES = [

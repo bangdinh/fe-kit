@@ -5,8 +5,7 @@ Pre-1.0: **minor là phá vỡ**, patch là tương thích ngược.
 
 ## [Unreleased]
 
-Hợp đồng gokit: `feature/rest-contract-export` (chưa tag, nền v0.8.6) — đổi thành tag khi
-gokit phát hành, xem `contract/gokit-source.json`.
+Hợp đồng gokit: **v0.8.7** (`contract/gokit-source.json`).
 
 ### Phá vỡ
 
