@@ -28,6 +28,8 @@ gokit phát hành, xem `contract/gokit-source.json`.
 - **logger**: sink ném lỗi không còn ném ra chỗ gọi (request 200 từng thành lỗi status 0),
   và `prettySink` không còn ném `URIError` khi path bị cắt giữa escape `%xx`. Hai bản vá
   camera-ai-platform làm sau ngày tách kit.
+- **auth**: `decodeJwtPayload` giữ đúng claim UTF-8 (tên tiếng Việt). Bản cũ dùng `atob`
+  nên mỗi byte thành một ký tự.
 
 ## [0.1.0] — 2026-09-13
 
