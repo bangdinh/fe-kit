@@ -108,7 +108,12 @@ export interface EnvelopeDialectSpec {
    * này tồn tại.
    */
   isSuccess?(input: DialectInput): boolean;
-  /** Lấy phần dữ liệu ra khỏi body thành công. Mặc định `body.data`. */
+  /**
+   * Lấy phần dữ liệu ra khỏi body thành công. Mặc định `body.data`.
+   *
+   * Trả `undefined` nghĩa là body không đúng phương ngữ → kit coi là LỖI
+   * (`INTERNAL_ERROR`), như `gokitDialect` làm với 200 thiếu `data`. `null` là dữ liệu.
+   */
   data?(body: unknown): unknown;
   /** Lấy khối phân trang, nếu có. Mặc định `body.page` theo shape gokit. */
   page?(body: unknown): PageMeta | undefined;
@@ -143,8 +148,21 @@ export function envelopeDialect(spec: EnvelopeDialectSpec): Dialect {
     parse(input) {
       if (!isSuccess(input)) return { ok: false, problem: takeError(input) };
       if (input.status === 204 || input.body === undefined) return { ok: true, data: undefined };
-      const page = takePage(input.body);
       const data = takeData(input.body);
+      if (data === undefined) {
+        // Đẩy `undefined` đi tiếp dưới lốt kiểu T là dời chỗ nổ ra tận nơi dùng.
+        const b = input.body;
+        return {
+          ok: false,
+          problem: problem(
+            input.status,
+            `Phản hồi không đúng phương ngữ ${spec.name}`,
+            'INTERNAL_ERROR',
+            `Không lấy được dữ liệu từ: ${typeof b === 'string' ? b.slice(0, 200) : JSON.stringify(b).slice(0, 200)}`,
+          ),
+        };
+      }
+      const page = takePage(input.body);
       return page ? { ok: true, data, page } : { ok: true, data };
     },
   };

@@ -91,6 +91,34 @@ describe('envelopeDialect', () => {
     expect(out.ok).toBe(false);
     expect(!out.ok && out.problem.code).toBe('140308');
   });
+
+  // Trả `undefined` đi tiếp dưới lốt kiểu T là đẩy chỗ nổ ra tận nơi dùng. Cả bốn hàm
+  // bóc vỏ cũ của camera-ai-platform đều ném ở đây; kit làm thay để sản phẩm khỏi viết lại.
+  it('thành công mà không lấy được dữ liệu là LỖI, kèm tên phương ngữ', () => {
+    const out = legacy.parse({ status: 200, body: { code: 1200, message: 'ok' }, contentType: ct });
+    expect(out.ok).toBe(false);
+    expect(!out.ok && out.problem.code).toBe('INTERNAL_ERROR');
+    expect(!out.ok && out.problem.title).toContain('legacy');
+  });
+
+  it('body thành công không phải object (trang HTML) cũng là lỗi', () => {
+    const out = legacy.parse({ status: 200, body: '<html>login</html>', contentType: 'text/html' });
+    // isSuccess của legacy đọc `code` trong body nên đây đi nhánh lỗi của nó; dùng
+    // isSuccess mặc định để thử đúng nhánh "thành công nhưng không có dữ liệu".
+    expect(out.ok).toBe(false);
+    const plain = envelopeDialect({ name: 'plain' });
+    const out2 = plain.parse({ status: 200, body: '<html>login</html>', contentType: 'text/html' });
+    expect(out2.ok).toBe(false);
+  });
+
+  it('`data: null` là dữ liệu hợp lệ, không phải thiếu', () => {
+    expect(legacy.parse({ status: 200, body: { code: 1200, data: null }, contentType: ct })).toEqual({ ok: true, data: null });
+  });
+
+  it('204 / body rỗng vẫn là thành công không có dữ liệu', () => {
+    const plain = envelopeDialect({ name: 'plain' });
+    expect(plain.parse({ status: 204, body: undefined, contentType: undefined })).toEqual({ ok: true, data: undefined });
+  });
 });
 
 describe('passthroughDialect', () => {

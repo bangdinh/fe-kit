@@ -15,6 +15,11 @@ gokit phát hành, xem `contract/gokit-source.json`.
   `INTERNAL_ERROR` để hiện "thử lại sau" thì bắt thêm `SERVICE_UNAVAILABLE`.
 - **`FieldError`**: `code` thành optional, `reason` thành bắt buộc — đúng như gokit gửi
   (bản cũ khai ngược). Cách sửa: chỗ đọc `fieldError.code` phải xử lý `undefined`.
+- **`envelopeDialect`**: thành công mà `data()` trả `undefined` (body thiếu khoá, hoặc
+  không phải object) giờ là lỗi `INTERNAL_ERROR`, như `gokitDialect`. Bản cũ trả
+  `data: undefined` im lặng. Cách sửa: endpoint thành công thật sự không có dữ liệu thì
+  khai `data: (b) => (b as { data?: unknown })?.data ?? null` cho phương ngữ đó; `null` là
+  dữ liệu.
 
 ### Thêm
 

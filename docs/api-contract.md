@@ -123,7 +123,8 @@ Phương ngữ là **tri thức sản phẩm** → khai ở dự án, không ở
 ## Bẫy
 
 - **200 kèm HTML**: trang đăng nhập của proxy/SSO. `gokitDialect` coi 200 mà thiếu khoá
-  `data` là LỖI, không phải dữ liệu. Đừng bắt rồi bỏ qua.
+  `data` là LỖI, không phải dữ liệu; `envelopeDialect` cũng vậy khi `data()` trả
+  `undefined`. Đừng bắt rồi bỏ qua.
 - **Thử lại**: mặc định chỉ `GET`/`HEAD`, chỉ 502/503, không bao giờ timeout. Đổi qua
   `retry`, tắt bằng `retry: false`.
 - **401**: kit gọi `onUnauthorized` đúng một lần. Có thêm một lần "chờ ân hạn" (mặc định
