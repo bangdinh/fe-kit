@@ -8,7 +8,10 @@ import type { OidcTx } from 'fe-kit/auth';
 import type { NextResponse } from 'next/server';
 
 export const TX_COOKIE = 'oidc_tx';
-const TX_MAX_AGE = 600; // 10 phút — dài hơn một lượt đăng nhập, ngắn hơn một ca làm.
+// 30 phút, khớp "Login timeout" mặc định của Keycloak — app không được là bên hẹp hơn.
+// 600s từng làm hỏng bước cài 2FA lần đầu ở camera-ai-platform (cài app authenticator +
+// quét QR vượt 10 phút ⇒ callback mất cookie, báo `missing_params` trông như lỗi IdP).
+const TX_MAX_AGE = 1800;
 
 const OPTIONS = {
   httpOnly: true as const,

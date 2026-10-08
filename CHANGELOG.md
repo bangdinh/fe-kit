@@ -41,6 +41,8 @@ gokit phát hành, xem `contract/gokit-source.json`.
 - **server**: `createSessionProxy` không còn redirect Server Action (React ném
   "unexpected response"); ghi token vừa refresh vào cả request để Server Component cùng
   lượt thấy token mới; dọn cookie phiên khi chỉ còn tenant/realm sót lại.
+- **template web**: cookie `oidc_tx` sống 1800s thay vì 600s, khớp "Login timeout" của
+  Keycloak; 600s làm hỏng bước cài 2FA lần đầu.
 - **template web**: route login chặn được `returnTo=/\evil.com` (bản cũ chỉ chặn `//`).
 - **auth**: `decodeJwtPayload` giữ đúng claim UTF-8 (tên tiếng Việt). Bản cũ dùng `atob`
   nên mỗi byte thành một ký tự.
