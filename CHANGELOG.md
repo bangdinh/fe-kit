@@ -27,6 +27,9 @@ gokit phát hành, xem `contract/gokit-source.json`.
   `make verify` fail khi file sinh ra lệch khỏi JSON đã vendor.
 - `fe-kit/types` xuất thêm `GOKIT_DEFAULT_LIMIT`, `GOKIT_MAX_LIMIT`, `GOKIT_HEADERS`,
   `GOKIT_PROBLEM_CONTENT_TYPE`, `GOKIT_CONTRACT_SOURCE`.
+- `createSessionProxy`: `origin(req)` cho build standalone sau ingress (`req.url` là
+  `0.0.0.0:8080`), `loginPath` nhận hàm (tiền tố locale), `next(req)` để nối next-intl
+  hoặc chặn thêm theo nghiệp vụ. `safeInternalPath` cho `returnTo`.
 - `defineEnvironments({ readEnv })` — nguồn đọc biến do sản phẩm cấp, cho nơi đọc động
   `process.env` không với tới (client bundle của Next/Expo, renderer Electron).
 
@@ -35,6 +38,10 @@ gokit phát hành, xem `contract/gokit-source.json`.
 - **logger**: sink ném lỗi không còn ném ra chỗ gọi (request 200 từng thành lỗi status 0),
   và `prettySink` không còn ném `URIError` khi path bị cắt giữa escape `%xx`. Hai bản vá
   camera-ai-platform làm sau ngày tách kit.
+- **server**: `createSessionProxy` không còn redirect Server Action (React ném
+  "unexpected response"); ghi token vừa refresh vào cả request để Server Component cùng
+  lượt thấy token mới; dọn cookie phiên khi chỉ còn tenant/realm sót lại.
+- **template web**: route login chặn được `returnTo=/\evil.com` (bản cũ chỉ chặn `//`).
 - **auth**: `decodeJwtPayload` giữ đúng claim UTF-8 (tên tiếng Việt). Bản cũ dùng `atob`
   nên mỗi byte thành một ký tự.
 

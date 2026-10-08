@@ -10,5 +10,5 @@ export type {
   SessionCookiesOptions,
   SessionSnapshot,
 } from './cookies';
-export { createSessionProxy } from './proxy';
+export { createSessionProxy, safeInternalPath } from './proxy';
 export type { SessionProxyOptions } from './proxy';
