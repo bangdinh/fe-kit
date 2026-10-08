@@ -7,9 +7,19 @@ thứ giữ cho nó đúng.
 
 | Subpath | Next server | Next client | Expo / React Native | Electron renderer |
 |---|:---:|:---:|:---:|:---:|
-| `fe-kit` (barrel), `/types`, `/config`, `/logger`, `/http`, `/access`, `/auth`, `/tokens` | ✓ | ✓ | ✓ | ✓ |
+| `fe-kit` (barrel), `/types`, `/config`, `/logger`, `/http`, `/access`, `/tokens` | ✓ | ✓ | ✓ | ✓ |
+| `fe-kit/auth` — `decodeJwtPayload`, `isJwtExpired`, `refreshTokens` | ✓ | ✓ | chưa đo | ✓ |
+| `fe-kit/auth` — luồng đăng nhập (`startLogin`, `completeLogin`) | ✓ | — | ✗ (xem dưới) | chưa đo |
 | `fe-kit/server` | ✓ | ✗ | ✗ | ✗ |
 | `fe-kit/ui` | ✓ | ✓ | ✗ | ✓ |
+
+"—" là không dùng ở đó: luồng đăng nhập web chạy trong route handler (giữ `verifier` trong
+cookie httpOnly), không chạy ở client component. Ô "chưa đo" nghĩa là đúng như vậy: `example/apps/mobile` không import `fe-kit/auth`, nên
+chưa có gì chứng minh nó chạy trên Hermes.
+
+`/config` ở trình duyệt, bản release mobile và renderer Electron: đọc động `process.env`
+ra `undefined` (bundler chỉ nhúng `process.env.X` viết thẳng; renderer Electron không có
+`process`). Khai `readEnv` cho `defineEnvironments` ở các nơi đó.
 
 ## Ba luật để lõi giữ được cột "React Native"
 
@@ -32,12 +42,20 @@ type-check bằng tsconfig của dự án tiêu thụ. Trong mọi module lõi:
 Cả ba đều do `example/apps/mobile` bắt được **sau khi** kit đã tự type-check xanh. Đó là
 lý do example phải có đủ ba nền tảng chứ không chỉ web.
 
-## React Native cần polyfill gì
+## Luồng đăng nhập trên React Native: chưa có
 
-`fe-kit/auth` dùng Web Crypto cho PKCE. Hermes không có sẵn `crypto.subtle` — cài polyfill
-(`expo-crypto`, `react-native-get-random-values`) trước khi dùng luồng đăng nhập trên
-mobile. Thiếu thì kit ném lỗi nói thẳng điều đó, thay vì để nó nổ thành
-`undefined is not an object`.
+Ba chỗ chặn, đo ở camera-ai-platform ngày 2026-10-08. Polyfill không gỡ được chỗ nào:
+
+1. `generatePkce` cần `crypto.subtle`. `expo-crypto` chỉ có `subtle` ở bản web
+   (`ExpoCrypto.web.js`), `react-native-get-random-values` chỉ có `getRandomValues`.
+2. `completeLogin` gọi cứng `verifyToken` của jose, không có chỗ tiêm verifier khác; jose
+   không chạy trên Hermes.
+3. Body token dựng bằng `URLSearchParams`; camera ghi nhận Hermes gửi sai body này
+   (Keycloak trả `invalid_request`) và tự encode form thành chuỗi.
+
+Camera chạy luồng native bằng bản riêng trong `@cap/auth/native` (port crypto, verifier,
+token store, browser tiêm vào). Đưa nhánh đó vào kit là việc có kế hoạch riêng — xem
+[adoption-camera-ai-platform.md](adoption-camera-ai-platform.md).
 
 ## Electron
 
