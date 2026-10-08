@@ -23,6 +23,12 @@ gokit phát hành, xem `contract/gokit-source.json`.
 - `fe-kit/types` xuất thêm `GOKIT_DEFAULT_LIMIT`, `GOKIT_MAX_LIMIT`, `GOKIT_HEADERS`,
   `GOKIT_PROBLEM_CONTENT_TYPE`, `GOKIT_CONTRACT_SOURCE`.
 
+### Sửa
+
+- **logger**: sink ném lỗi không còn ném ra chỗ gọi (request 200 từng thành lỗi status 0),
+  và `prettySink` không còn ném `URIError` khi path bị cắt giữa escape `%xx`. Hai bản vá
+  camera-ai-platform làm sau ngày tách kit.
+
 ## [0.1.0] — 2026-09-13
 
 Bản đầu. Bóc từ `camera-ai-platform` phần dùng chung được; giữ lại phần dính sản phẩm ở đó.

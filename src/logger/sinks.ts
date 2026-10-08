@@ -31,6 +31,14 @@ export const prettySink: LogSink = (record) => {
 };
 
 /** Production: một dòng JSON cho log aggregator (Loki/ELK/CloudWatch) parse. */
+/**
+ * Đường lùi khi chính sink ném lỗi. Nằm ở đây vì đây là chỗ DUY NHẤT được gọi
+ * `console.*` (scripts/check-layers.sh).
+ */
+export function reportSinkFailure(message: string, error: unknown): void {
+  console.error(`[logger] sink lỗi khi ghi "${message}":`, error);
+}
+
 export const jsonSink: LogSink = (record) => {
   write(record.level, [safeJson(record)]);
 };
@@ -101,9 +109,22 @@ function parseQuery(path: string): Record<string, string> {
     if (!part) continue;
     const [k, ...rest] = part.split('=');
     if (!k) continue;
-    out[decodeURIComponent(k)] = decodeURIComponent(rest.join('=') || '');
+    out[safeDecode(k)] = safeDecode(rest.join('=') || '');
   }
   return out;
+}
+
+/**
+ * `path` tới đây ĐÃ qua `sanitize`, nên dài hơn `maxString` là bị cắt — có khi cắt đúng
+ * giữa một escape (`…%2… (+37)`), và `decodeURIComponent` ném `URIError`. Giải mã không
+ * được thì in nguyên văn: log lệch một chữ còn hơn log làm hỏng request.
+ */
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
 }
 
 function formatRequestLines(request: HttpLogEntry['request']): string[] {

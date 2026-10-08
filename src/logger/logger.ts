@@ -3,7 +3,7 @@
 import { rawEnv } from '../config/env';
 import { httpContext, type HttpLogEntry } from './http';
 import { sanitize } from './redact';
-import { jsonSink, prettySink } from './sinks';
+import { jsonSink, prettySink, reportSinkFailure } from './sinks';
 import type { LogContext, LogLevel, Logger, LogRecord, LogSink, RecordLevel } from './types';
 
 const RANK: Record<LogLevel, number> = {
@@ -106,6 +106,19 @@ export function resetLogger(): void {
   currentSink = isProduction() ? jsonSink : prettySink;
 }
 
+/**
+ * Ghi log KHÔNG BAO GIỜ được ném ra chỗ gọi. `createHttpClient` gọi `log.http` trong
+ * luồng của request, nên một sink hỏng biến request 200 thành lỗi status 0 (đã xảy ra
+ * ở camera-ai-platform 2026-09-25). Sink hỏng thì báo một dòng rồi bỏ.
+ */
+function writeRecord(record: LogRecord): void {
+  try {
+    currentSink(record);
+  } catch (e) {
+    reportSinkFailure(record.message, e);
+  }
+}
+
 export function createLogger(scope: string): Logger {
   const emit = (level: RecordLevel, message: string, context?: LogContext): void => {
     if (RANK[level] < RANK[currentLevel]) return;
@@ -118,7 +131,7 @@ export function createLogger(scope: string): Logger {
       ...(context ? { context: sanitize(context) as LogContext } : {}),
     };
     // Đọc currentSink tại thời điểm gọi → configureLogger sau khi tạo logger vẫn có tác dụng.
-    currentSink(record);
+    writeRecord(record);
   };
 
   return {
@@ -148,7 +161,7 @@ export function createLogger(scope: string): Logger {
       // info (không phải debug) để luôn thấy API + Params khi LOG_LEVEL mặc định prod=info.
       const level: RecordLevel = failed ? 'error' : 'info';
       if (RANK[level] < RANK[currentLevel]) return;
-      currentSink({
+      writeRecord({
         time: new Date().toISOString(),
         level,
         scope,
