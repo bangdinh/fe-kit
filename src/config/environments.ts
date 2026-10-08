@@ -19,6 +19,20 @@ export interface DefineEnvironmentsOptions<N extends string, K extends string> {
    * là mọi biến gõ sai đều im lặng không có tác dụng.
    */
   overrides?: Partial<Record<K, string>>;
+  /**
+   * Nguồn đọc biến (cả biến chọn môi trường lẫn biến override). Mặc định `envVar`:
+   * đọc động `process.env`, thử thêm tiền tố `NEXT_PUBLIC_` / `EXPO_PUBLIC_`.
+   *
+   * Khai khi đọc động không với tới giá trị: bundler của Next/Expo chỉ nhúng
+   * `process.env.NEXT_PUBLIC_X` viết THẲNG trong code, nên ở trình duyệt hay bản
+   * release mobile phép đọc động ra `undefined`; renderer Electron chỉ có
+   * `import.meta.env`. Giá trị rỗng vẫn nghĩa là "dùng mặc định".
+   *
+   * ```ts
+   * readEnv: (k) => ({ APP_ENV: process.env.NEXT_PUBLIC_APP_ENV })[k]
+   * ```
+   */
+  readEnv?: (name: string) => string | undefined;
 }
 
 export interface Environments<N extends string, K extends string> {
@@ -74,9 +88,16 @@ export function defineEnvironments<
   }
   const varName = options.envVarName ?? 'APP_ENV';
   const overrides = (options.overrides ?? {}) as Partial<Record<K, string>>;
+  const custom = options.readEnv;
+  const read = custom
+    ? (name: string): string | undefined => {
+        const v = custom(name);
+        return v !== undefined && v.length > 0 ? v : undefined;
+      }
+    : envVar;
 
   const current = (): N => {
-    const raw = envVar(varName);
+    const raw = read(varName);
     return raw !== undefined && raw in table ? (raw as N) : fallback;
   };
 
@@ -92,7 +113,7 @@ export function defineEnvironments<
     const out = { ...base } as Record<K, string>;
     for (const key of Object.keys(overrides) as K[]) {
       const varKey = overrides[key];
-      const value = varKey ? envVar(varKey) : undefined;
+      const value = varKey ? read(varKey) : undefined;
       if (value !== undefined) out[key] = value;
     }
     return Object.freeze(out);

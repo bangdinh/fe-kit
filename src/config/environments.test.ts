@@ -59,6 +59,28 @@ describe('defineEnvironments', () => {
     expect(() => defineEnvironments(table, { default: 'staging' })).toThrow(/không có trong bảng/);
   });
 
+  // Bundler chỉ nhúng `process.env.NEXT_PUBLIC_X` / `EXPO_PUBLIC_X` viết THẲNG; đọc động
+  // qua `globalThis.process.env[k]` ở trình duyệt hay bản release mobile ra undefined.
+  // Renderer Electron không có `process`, chỉ có `import.meta.env`.
+  describe('readEnv — nguồn biến do sản phẩm cấp', () => {
+    it('chọn môi trường và override đều đọc qua readEnv, không đọc process.env', () => {
+      process.env.APP_ENV = 'prod';
+      const vars: Record<string, string> = { APP_ENV: 'beta', API_GATEWAY_URI: 'https://tunnel.test' };
+      const env = defineEnvironments(table, {
+        default: 'uat',
+        overrides: { gateway: 'API_GATEWAY_URI' },
+        readEnv: (k) => vars[k],
+      });
+      expect(env.current()).toBe('beta');
+      expect(env.resolve()).toEqual({ gateway: 'https://tunnel.test', sso: 'https://beta-sso.test' });
+    });
+
+    it('giá trị RỖNG từ readEnv vẫn nghĩa là "dùng mặc định"', () => {
+      const env = defineEnvironments(table, { default: 'uat', readEnv: () => '' });
+      expect(env.current()).toBe('uat');
+    });
+  });
+
   it('endpoint() báo đúng chỗ phải sửa khi thiếu khoá', () => {
     const env = defineEnvironments({ uat: { gateway: '' } });
     expect(() => env.endpoint('gateway')).toThrow(/bảng môi trường của dự án/);

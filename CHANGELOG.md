@@ -27,6 +27,8 @@ gokit phát hành, xem `contract/gokit-source.json`.
   `make verify` fail khi file sinh ra lệch khỏi JSON đã vendor.
 - `fe-kit/types` xuất thêm `GOKIT_DEFAULT_LIMIT`, `GOKIT_MAX_LIMIT`, `GOKIT_HEADERS`,
   `GOKIT_PROBLEM_CONTENT_TYPE`, `GOKIT_CONTRACT_SOURCE`.
+- `defineEnvironments({ readEnv })` — nguồn đọc biến do sản phẩm cấp, cho nơi đọc động
+  `process.env` không với tới (client bundle của Next/Expo, renderer Electron).
 
 ### Sửa
 
