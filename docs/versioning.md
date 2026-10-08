@@ -9,16 +9,34 @@ thử lại), nâng một peer dependency lên major mới.
 
 ## Cắt release
 
+Cùng khuôn với `make release` của b2b-gokit.
+
 ```bash
-make release VERSION=v0.2.0 DRY=1   # xem trước
-make release VERSION=v0.2.0
+make release VERSION=v0.2.0 DRY=1   # chỉ in mục CHANGELOG sẽ ghi, không đụng gì
+make release VERSION=v0.2.0         # làm thật, đứng ở main
+git push origin main && git push origin v0.2.0
+make verify-tag VERSION=v0.2.0      # sau khi push
 ```
 
-Script sẽ: chặn nếu cây làm việc bẩn hoặc tag đã có hoặc CHANGELOG chưa có mục →
-`make verify` → cập nhật `package.json` → cập nhật `DEFAULT_KIT_SPEC` trong `plan.js`
-(để dự án sinh ra pin đúng tag vừa cắt) → commit → tag.
+`make release`:
 
-**Không push.** Script in ra hai lệnh để dev tự chạy.
+1. Chặn nếu không ở `main`, cây bẩn, tag đã có, hoặc không có gì để release.
+2. `make verify`.
+3. Bump `package.json`, `DEFAULT_KIT_SPEC` trong `plan.js` (dự án sinh ra pin đúng tag vừa
+   cắt), và ví dụ pin trong `README.md`, `docs/versioning.md`.
+4. Sinh lại `example/` — template in version của kit, không sinh lại thì `verify-example`
+   đỏ ngay trên `main`.
+5. Ghi mục CHANGELOG, commit `chore(release): vX.Y.Z`, annotated tag mang release notes.
+
+**Mục CHANGELOG** — khác gokit một điểm: mục `[Unreleased]` viết tay thì dùng nguyên văn
+(vì mục `### Phá vỡ` phải có cách sửa, thứ commit message không chứa); `[Unreleased]` rỗng
+thì sinh từ conventional commit kể từ tag trước, như gokit.
+
+**Không push.** Script in lệnh push để dev tự chạy.
+
+`make verify-tag` chạy CLI của chính tag đã push (`npx github:bangdinh/fe-kit#vX.Y.Z`), sinh
+dự án, kiểm dự án pin đúng tag, cài kit từ GitHub rồi build. `make smoke` cài từ tarball ở
+máy nên không bắt được tag quên bump `DEFAULT_KIT_SPEC` hay tag chưa push.
 
 ## Dự án tiêu thụ pin thế nào
 

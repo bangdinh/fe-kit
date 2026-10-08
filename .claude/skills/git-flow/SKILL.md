@@ -56,12 +56,15 @@ Kiểm bằng mắt thêm ba thứ:
 ## Cắt release (maintainer)
 
 ```bash
-make release VERSION=v0.2.0 DRY=1   # xem trước
-make release VERSION=v0.2.0
+make release VERSION=v0.2.0 DRY=1   # in mục CHANGELOG sẽ ghi
+make release VERSION=v0.2.0         # đứng ở main
+make verify-tag VERSION=v0.2.0      # sau khi dev push tag
 ```
 
-Script chặn nếu cây bẩn / tag đã có / CHANGELOG chưa có mục, chạy `make verify`, cập nhật
-`package.json` và `DEFAULT_KIT_SPEC`, commit, tag. **Không push.**
+Script chặn nếu không ở `main` / cây bẩn / tag đã có, chạy `make verify`, bump version và
+`DEFAULT_KIT_SPEC`, sinh lại `example/`, ghi CHANGELOG (`[Unreleased]` viết tay thì dùng
+nguyên văn, rỗng thì sinh từ commit), commit, annotated tag kèm notes. **Không push.**
+Chi tiết: `docs/versioning.md`.
 
 Pre-1.0: **minor là phá vỡ**, patch là tương thích. Mục `### Phá vỡ` trong CHANGELOG phải
 ghi **cách sửa** cho dự án tiêu thụ, không chỉ ghi cái gì đã đổi.
