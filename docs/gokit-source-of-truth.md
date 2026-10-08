@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | In progress — P0–P3 đã làm trên nhánh (gokit `feature/rest-contract-export` chưa commit; fe-kit `feat/prepare-v0-2-0`). Chờ gokit commit + tag, rồi `make contract-sync` |
+| Status | In progress — gokit v0.8.7 đã commit + tag (chờ push); fe-kit đã đồng bộ hợp đồng v0.8.7 trên nhánh `feat/prepare-v0-2-0`, chờ cắt v0.2.0 |
 | Date | 2026-10-08 |
 | Scope | fe-kit + b2b-gokit |
 | Related | [api-contract.md](api-contract.md) · [decisions.md](decisions.md) D-012 · gokit ADR-0001 (response contract) |
@@ -100,9 +100,9 @@ Done khi: hai ADR merge, bảng lệch ở mục 1 có hướng xử lý cho t�
 
 Done khi: `GOWORK=off go test ./...` xanh, JSON có trong tag.
 
-Đã làm trên nhánh gokit `feature/rest-contract-export` (để chưa commit theo luật repo gokit):
+Đã làm, phát hành trong gokit **v0.8.7** (3 commit trên `master` + `chore(release)`):
 `errors.Codes()`, `Code.HTTPStatus()`, package `contract` + golden test,
-`make contract` / `make verify-contract`, README, ADR. 51 package test xanh. Còn: commit, tag.
+`make contract` / `make verify-contract`, README, ADR. 51 package test xanh.
 
 ### P2 — fe-kit tiêu thụ
 
@@ -119,9 +119,8 @@ Done khi: `GOWORK=off go test ./...` xanh, JSON có trong tag.
 
 Done khi: `make verify` xanh, không còn literal mã lỗi hay status nào gõ tay trong `src/`.
 
-Đã làm (commit `feat(types): sinh hợp đồng REST từ gokit thay vì chép tay`). JSON hiện vendor
-từ working tree của gokit; `contract/gokit-source.json` ghi rõ "chưa commit". Sau khi gokit có
-tag: `make contract-sync GOKIT_REF=<tag>` — JSON không đổi, chỉ đổi nguồn. Đối chiếu
+Đã làm (commit `feat(types): sinh hợp đồng REST từ gokit thay vì chép tay`), rồi đồng bộ lại
+từ tag v0.8.7 bằng `make contract-sync GOKIT_REF=v0.8.7` — JSON không đổi, chỉ đổi nguồn. Đối chiếu
 `wire.ts` bằng type-level test; đã thử làm lệch `FieldError` và `PageMeta` để chắc test đỏ.
 
 ### P3 — Gỡ bản chép trong tài liệu
