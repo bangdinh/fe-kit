@@ -22,6 +22,12 @@ typecheck: ## tsc --noEmit cho kit
 test: ## Unit test của kit
 	npx vitest run
 
+contract-sync: ## Lấy hợp đồng REST từ tag gokit rồi sinh lại type (GOKIT_REF= bắt buộc, GOKIT_DIR= mặc định ../b2b-gokit)
+	GOKIT_REF=$(GOKIT_REF) GOKIT_DIR=$(GOKIT_DIR) ./scripts/contract-sync.sh
+
+contract-verify: ## Fail nếu src/types/contract.gen.ts lệch khỏi hợp đồng gokit đã vendor
+	node scripts/gen-contract.js --check
+
 check-layers: ## Luật ranh giới (không URL trong src, không next/antd ngoài vùng cho phép)
 	./scripts/check-layers.sh
 
@@ -38,7 +44,7 @@ example-check: ## type-check + build cả 3 example app
 	$(PNPM) --filter '@example/web' exec next build
 	$(PNPM) --filter '@example/desktop' run build
 
-verify: lint typecheck test check-layers verify-example example-check ## Cổng DUY NHẤT trước khi commit
+verify: lint typecheck test contract-verify check-layers verify-example example-check ## Cổng DUY NHẤT trước khi commit
 	@echo "✓ verify xanh"
 
 smoke: ## Nghiệm thu thật: sinh dự án mới, cài kit từ tarball, build
@@ -61,4 +67,4 @@ clean: ## Xoá node_modules, build output, tarball
 	rm -rf node_modules example/node_modules example/apps/*/node_modules example/shared/node_modules
 	rm -rf example/apps/*/.next example/apps/*/dist example/apps/*/.expo .turbo *.tgz
 
-.PHONY: help install lint typecheck test check-layers example verify-example example-check verify smoke new pack hooks release clean
+.PHONY: help install lint typecheck test contract-sync contract-verify check-layers example verify-example example-check verify smoke new pack hooks release clean

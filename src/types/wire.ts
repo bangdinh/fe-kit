@@ -1,9 +1,15 @@
-// Hợp đồng dây của b2b-gokit — bản FE. Nguồn: b2b-gokit `response/response.go`,
-// `errors/problem.go`, `errors/codes.go`, `domain/pagination.go`,
-// `docs/REST_API_STANDARD.md`.
+// Hợp đồng dây của b2b-gokit — bản FE.
+//
+// Dữ kiện (mã lỗi, luật status → code, trần phân trang, hình dạng envelope) đến từ
+// `contract.gen.ts`, sinh từ `contract/rest-contract.json` của gokit — không chép tay.
+// File này giữ phần "dùng thế nào ở FE": comment giải thích và type lỏng cho mã lỗi.
+// `wire.contract.test.ts` đối chiếu các interface dưới đây với bản sinh ra.
 //
 // File này KHÔNG chứa DTO của bất kỳ sản phẩm nào. Nó chỉ mô tả cái vỏ mà mọi
 // service gokit trả về; ruột (`T`) là của sản phẩm.
+import { GOKIT_ERROR_CODES, type GokitErrorCode } from './contract.gen';
+
+export { GOKIT_ERROR_CODES, type GokitErrorCode };
 
 /** Envelope thành công cho tài nguyên đơn: `{"data": {...}}`. */
 export interface Envelope<T> {
@@ -41,45 +47,29 @@ export interface Page<T> {
 }
 
 /**
- * 15 mã lỗi ổn định của gokit (`errors/codes.go`). Đây là thứ FE được phép
- * switch/case — KHÔNG switch theo `title` hay `detail`, hai trường đó là văn
- * bản cho người đọc và đổi được bất cứ lúc nào.
- */
-export const GOKIT_ERROR_CODES = [
-  'NOT_FOUND',
-  'UNAUTHORIZED',
-  'FORBIDDEN',
-  'INVALID_INPUT',
-  'VALIDATION_FAILED',
-  'ALREADY_EXISTS',
-  'CONFLICT',
-  'PRECONDITION_FAILED',
-  'OUT_OF_RANGE',
-  'RATE_LIMITED',
-  'TIMEOUT',
-  'SERVICE_UNAVAILABLE',
-  'UNIMPLEMENTED',
-  'DATA_LOSS',
-  'INTERNAL_ERROR',
-] as const;
-
-export type GokitErrorCode = (typeof GOKIT_ERROR_CODES)[number];
-
-/**
  * Mã lỗi khai lỏng có chủ đích: `GokitErrorCode` cho autocomplete, `string`
  * cho sự thật lúc chạy. Service mới thêm mã mà FE hạ type xuống `never` thì
  * chỗ `default:` không bao giờ chạy, và lỗi mới trở thành lỗi im lặng.
  */
 export type ErrorCode = GokitErrorCode | (string & {});
 
-/** Một lỗi ở cấp field — chỉ có ở `VALIDATION_FAILED`. */
+/**
+ * Một lỗi ở cấp field — chỉ có ở `VALIDATION_FAILED`.
+ *
+ * `reason` luôn có; `code` (UPPER_SNAKE, vd `REQUIRED`) là `omitempty` ở gokit.
+ */
 export interface FieldError {
   field: string;
-  code: string;
-  reason?: string;
+  code?: string;
+  reason: string;
 }
 
-/** Envelope lỗi RFC 9457 (`application/problem+json`). */
+/**
+ * Envelope lỗi RFC 9457 (`application/problem+json`).
+ *
+ * `instance` là thành viên chuẩn của RFC 9457 mà gokit không gửi; giữ lại vì backend
+ * cũ đi qua `envelopeDialect` có thể có.
+ */
 export interface ProblemDetails {
   type: string;
   title: string;
@@ -93,7 +83,7 @@ export interface ProblemDetails {
 
 /** Tham số truy vấn chuẩn của collection gokit. */
 export interface ListQuery {
-  /** Mặc định 20, trần 100 (`domain.ClampLimit`). Gửi quá trần thì BE tự kẹp. */
+  /** Mặc định `GOKIT_DEFAULT_LIMIT`, trần `GOKIT_MAX_LIMIT`. Gửi quá trần thì BE tự kẹp. */
   limit?: number;
   /** Con trỏ đục. Rỗng/vắng = trang đầu. */
   cursor?: string;

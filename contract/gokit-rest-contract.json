@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "contentTypes": {
+    "problem": "application/problem+json"
+  },
+  "errorCodes": [
+    {
+      "code": "NOT_FOUND",
+      "title": "Resource not found",
+      "status": 404
+    },
+    {
+      "code": "UNAUTHORIZED",
+      "title": "Authentication required",
+      "status": 401
+    },
+    {
+      "code": "FORBIDDEN",
+      "title": "Permission denied",
+      "status": 403
+    },
+    {
+      "code": "INVALID_INPUT",
+      "title": "Invalid input",
+      "status": 400
+    },
+    {
+      "code": "VALIDATION_FAILED",
+      "title": "Validation failed",
+      "status": 422
+    },
+    {
+      "code": "ALREADY_EXISTS",
+      "title": "Resource already exists",
+      "status": 409
+    },
+    {
+      "code": "INTERNAL_ERROR",
+      "title": "Internal server error",
+      "status": 500
+    },
+    {
+      "code": "SERVICE_UNAVAILABLE",
+      "title": "Service unavailable",
+      "status": 503
+    },
+    {
+      "code": "TIMEOUT",
+      "title": "Request timeout",
+      "status": 504
+    },
+    {
+      "code": "RATE_LIMITED",
+      "title": "Too many requests",
+      "status": 429
+    },
+    {
+      "code": "CONFLICT",
+      "title": "Conflict",
+      "status": 409
+    },
+    {
+      "code": "PRECONDITION_FAILED",
+      "title": "Precondition failed",
+      "status": 412
+    },
+    {
+      "code": "OUT_OF_RANGE",
+      "title": "Value out of range",
+      "status": 400
+    },
+    {
+      "code": "UNIMPLEMENTED",
+      "title": "Not implemented",
+      "status": 501
+    },
+    {
+      "code": "DATA_LOSS",
+      "title": "Data loss",
+      "status": 500
+    }
+  ],
+  "statusToCode": {
+    "statuses": [
+      {
+        "status": 400,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 401,
+        "code": "UNAUTHORIZED"
+      },
+      {
+        "status": 402,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 403,
+        "code": "FORBIDDEN"
+      },
+      {
+        "status": 404,
+        "code": "NOT_FOUND"
+      },
+      {
+        "status": 405,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 406,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 407,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 408,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 409,
+        "code": "CONFLICT"
+      },
+      {
+        "status": 410,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 411,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 412,
+        "code": "PRECONDITION_FAILED"
+      },
+      {
+        "status": 413,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 414,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 415,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 416,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 417,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 418,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 421,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 422,
+        "code": "VALIDATION_FAILED"
+      },
+      {
+        "status": 423,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 424,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 425,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 426,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 428,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 429,
+        "code": "RATE_LIMITED"
+      },
+      {
+        "status": 431,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 451,
+        "code": "INVALID_INPUT"
+      },
+      {
+        "status": 500,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 501,
+        "code": "UNIMPLEMENTED"
+      },
+      {
+        "status": 502,
+        "code": "SERVICE_UNAVAILABLE"
+      },
+      {
+        "status": 503,
+        "code": "SERVICE_UNAVAILABLE"
+      },
+      {
+        "status": 504,
+        "code": "TIMEOUT"
+      },
+      {
+        "status": 505,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 506,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 507,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 508,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 510,
+        "code": "INTERNAL_ERROR"
+      },
+      {
+        "status": 511,
+        "code": "INTERNAL_ERROR"
+      }
+    ],
+    "fallback4xx": "INVALID_INPUT",
+    "fallback5xx": "INTERNAL_ERROR"
+  },
+  "pagination": {
+    "defaultLimit": 20,
+    "maxLimit": 100
+  },
+  "headers": {
+    "requestId": "X-Request-Id",
+    "correlationId": "X-Correlation-Id",
+    "idempotencyKey": "Idempotency-Key"
+  },
+  "shapes": {
+    "dataEnvelope": [
+      {
+        "name": "data",
+        "type": "unknown",
+        "optional": false
+      }
+    ],
+    "pageEnvelope": [
+      {
+        "name": "data",
+        "type": "array",
+        "optional": false
+      },
+      {
+        "name": "page",
+        "type": "object",
+        "optional": false
+      }
+    ],
+    "pageMeta": [
+      {
+        "name": "limit",
+        "type": "number",
+        "optional": true
+      },
+      {
+        "name": "nextCursor",
+        "type": "string",
+        "optional": true
+      },
+      {
+        "name": "hasMore",
+        "type": "boolean",
+        "optional": false
+      },
+      {
+        "name": "total",
+        "type": "number",
+        "optional": true
+      }
+    ],
+    "problemDetail": [
+      {
+        "name": "type",
+        "type": "string",
+        "optional": false
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "optional": false
+      },
+      {
+        "name": "status",
+        "type": "number",
+        "optional": false
+      },
+      {
+        "name": "code",
+        "type": "string",
+        "optional": false
+      },
+      {
+        "name": "traceId",
+        "type": "string",
+        "optional": true
+      },
+      {
+        "name": "detail",
+        "type": "string",
+        "optional": true
+      },
+      {
+        "name": "errors",
+        "type": "array",
+        "optional": true
+      }
+    ],
+    "fieldError": [
+      {
+        "name": "field",
+        "type": "string",
+        "optional": false
+      },
+      {
+        "name": "code",
+        "type": "string",
+        "optional": true
+      },
+      {
+        "name": "reason",
+        "type": "string",
+        "optional": false
+      }
+    ]
+  }
+}

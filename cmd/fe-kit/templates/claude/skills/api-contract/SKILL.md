@@ -80,6 +80,7 @@ export const legacyApi = createHttpClient({ baseUrl: …, dialect: legacy });
 - **Backend trả 200 kèm HTML**: trang đăng nhập của proxy/SSO. Kit nhận ra và
   ném lỗi thay vì trả về "dữ liệu" — đừng bắt lỗi rồi bỏ qua.
 - **Thử lại**: kit chỉ tự thử lại `GET`/`HEAD` khi gặp 502/503. KHÔNG thử lại
-  lệnh ghi (gokit chưa có `Idempotency-Key`) và KHÔNG thử lại timeout.
+  lệnh ghi (kit không biết service nào đã bật `Idempotency-Key`) và KHÔNG thử lại
+  timeout.
 - **401**: kit tự xin token mới đúng một lần. Đừng bọc thêm vòng thử lại của
   riêng bạn — hai tầng chồng nhau thì lời gọi hỏng sẽ chạy tới bốn lần.

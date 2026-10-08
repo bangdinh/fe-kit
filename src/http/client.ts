@@ -10,6 +10,7 @@
 //   • interceptor 401 đúng một lần, có khoá chống bão refresh.
 import { isTimeoutError, timeoutMs as readTimeoutMs, timeoutSignal } from '../config/timeout';
 import { createLogger } from '../logger/logger';
+import { GOKIT_HEADERS } from '../types/contract.gen';
 import type { Logger } from '../logger/types';
 import type { Page, PageMeta } from '../types/wire';
 import { gokitDialect, type Dialect } from './dialect';
@@ -35,7 +36,10 @@ export interface RetryOptions {
   attempts: number;
   /** Chỉ thử lại method idempotent — mặc định GET/HEAD. */
   methods: readonly string[];
-  /** Status đáng thử lại. 429 KHÔNG nằm trong mặc định: chưa có Retry-After ở gokit. */
+  /**
+   * Status đáng thử lại. 429 KHÔNG nằm trong mặc định: `Retry-After` của gokit
+   * (middleware ratelimit) là literal, không nằm trong hợp đồng, nên kit chưa đọc.
+   */
   statuses: readonly number[];
   /** Chờ `backoffMs * 2^n` giữa các lần. */
   backoffMs: number;
@@ -46,8 +50,9 @@ export interface RetryOptions {
  *
  * KHÔNG thử lại khi hết hạn chờ: người dùng vừa chờ trọn hạn rồi, thử lại là
  * bắt họ chờ thêm ngần ấy nữa. Cũng KHÔNG thử lại POST/PUT/PATCH/DELETE —
- * gokit chưa có `Idempotency-Key` (đang P2), nên thử lại một lệnh ghi là có
- * thể tạo hai bản ghi.
+ * gokit có middleware `Idempotency-Key` (`GOKIT_HEADERS.idempotencyKey`) nhưng
+ * từng service tự bật, kit không biết service nào đã bật; thử lại một lệnh ghi
+ * ở service chưa bật là có thể tạo hai bản ghi.
  */
 export const DEFAULT_RETRY: RetryOptions = {
   attempts: 2,
@@ -173,7 +178,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       const hasBody = body !== undefined && method !== 'GET' && method !== 'HEAD';
       const headers: Record<string, string> = {
         accept: 'application/json',
-        'x-request-id': newRequestId(),
+        [GOKIT_HEADERS.requestId.toLowerCase()]: newRequestId(),
         ...(hasBody ? { 'content-type': 'application/json' } : {}),
         ...staticHeaders,
         ...extraHeaders,

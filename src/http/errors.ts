@@ -3,6 +3,7 @@
 // Vì sao một kiểu: chỗ gọi không nên phải phân biệt `DOMException` tên
 // 'TimeoutError', `TypeError` của fetch khi đứt mạng, và body lỗi của backend.
 // Cả ba đều là "lời gọi không thành", khác nhau ở `status` và `code`.
+import { GOKIT_FALLBACK_4XX, GOKIT_FALLBACK_5XX, GOKIT_STATUS_TO_CODE } from '../types/contract.gen';
 import type { ErrorCode, FieldError, ProblemDetails } from '../types/wire';
 
 export interface HttpErrorInit {
@@ -79,20 +80,13 @@ export function hasErrorCode(e: unknown, ...codes: ErrorCode[]): boolean {
   return isHttpError(e) && codes.includes(e.code);
 }
 
-/** Suy mã gokit từ HTTP status — dùng khi backend không trả `code`. */
+/**
+ * Suy mã gokit từ HTTP status — dùng khi backend không trả `code`.
+ *
+ * Luật là của gokit (`errors.CodeForHTTPStatus`), đọc từ `contract.gen.ts`. Status
+ * dưới 400 (phương ngữ cũ trả lỗi kèm 200) đi theo nhánh 4xx: đó vẫn là lỗi mà
+ * backend đã trả lời được, không phải lỗi phía server.
+ */
 export function codeFromStatus(status: number): ErrorCode {
-  switch (status) {
-    case 400: return 'INVALID_INPUT';
-    case 401: return 'UNAUTHORIZED';
-    case 403: return 'FORBIDDEN';
-    case 404: return 'NOT_FOUND';
-    case 409: return 'CONFLICT';
-    case 412: return 'PRECONDITION_FAILED';
-    case 422: return 'VALIDATION_FAILED';
-    case 429: return 'RATE_LIMITED';
-    case 501: return 'UNIMPLEMENTED';
-    case 503: return 'SERVICE_UNAVAILABLE';
-    case 504: return 'TIMEOUT';
-    default:  return status >= 500 ? 'INTERNAL_ERROR' : 'INVALID_INPUT';
-  }
+  return GOKIT_STATUS_TO_CODE[status] ?? (status >= 500 ? GOKIT_FALLBACK_5XX : GOKIT_FALLBACK_4XX);
 }

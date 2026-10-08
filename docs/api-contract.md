@@ -1,7 +1,13 @@
 # Hợp đồng API
 
-Kit nhắm tới chuẩn REST của **b2b-gokit**. Nguồn đã đọc: `response/response.go`,
-`errors/problem.go`, `errors/codes.go`, `domain/pagination.go`, `docs/REST_API_STANDARD.md`.
+Kit nhắm tới chuẩn REST của **b2b-gokit** (VMSN-STD-API-001 v1.3, gokit
+`docs/rest-api-standard.md`).
+
+Dữ kiện của hợp đồng — mã lỗi, luật status → code, trần phân trang, tên header, hình dạng
+envelope — **không chép tay**. Chúng sinh từ `contract/gokit-rest-contract.json` (vendor từ
+`contract/rest-contract.json` của gokit) ra `src/types/contract.gen.ts`. Nâng hợp đồng:
+`make contract-sync GOKIT_REF=<tag>`. Lý do và cơ chế: [gokit-source-of-truth.md](gokit-source-of-truth.md).
+Các bảng dưới đây để đọc cho nhanh; lệch với file sinh ra thì file sinh ra đúng.
 
 ## Thành công
 
@@ -48,8 +54,11 @@ không bao giờ chạy, và mã lỗi mới của backend trở thành lỗi im
 | `sort` | `-createdAt` giảm dần, `createdAt`/`+createdAt` tăng dần |
 | Header | `X-Request-Id` bắt buộc — kit tự sinh |
 
-Chưa có ở gokit, **đừng giả định**: `Idempotency-Key`, `ETag`/`If-Match`, `Retry-After`,
-`Cache-Control`. Đó là lý do kit không tự thử lại lệnh ghi.
+gokit có middleware `idempotency` (`Idempotency-Key`), `httpcache` (`ETag`/`If-None-Match`,
+`Cache-Control`), `deprecation` (`Deprecation`, `Sunset`) và `ratelimit` (gửi `Retry-After`),
+nhưng **từng service tự bật**. Kit không biết service nào đã bật, nên không tự thử lại lệnh
+ghi và không đọc `Retry-After` (header này chưa nằm trong hợp đồng). Gửi `Idempotency-Key`
+khi bạn biết chắc service đó có: `headers: { [GOKIT_HEADERS.idempotencyKey]: key }`.
 
 ## Dùng ở FE
 
@@ -90,8 +99,8 @@ Ba trạng thái phân biệt được, và cố ý không gộp:
 
 ## Service không theo chuẩn — phương ngữ
 
-Một FE thật luôn phải sống chung với vài service cũ. Ở `camera-ai-platform` đo được **5
-phương ngữ** chạy song song. Đừng rải `if (body.code === 1200)` khắp nơi:
+Một FE thật luôn phải sống chung với vài service cũ. Ở `camera-ai-platform` đo được **9
+dạng envelope** chạy song song (2026-10-08; số 5 ghi ở giai đoạn 1 đã cũ). Đừng rải `if (body.code === 1200)` khắp nơi:
 
 ```ts
 import { createHttpClient, envelopeDialect } from 'fe-kit/http';

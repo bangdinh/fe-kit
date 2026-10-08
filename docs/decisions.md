@@ -102,3 +102,21 @@ Ngân sách description của ba skill kit phát hành: **870 ký tự** (`api-c
 `fe-architecture` 382 · `git-flow` 167). Trần là 1% context window của model đang chạy —
 2.000 với model 200k. Còn rộng, nhưng đo lại mỗi khi thêm skill thứ tư: khi listing tràn,
 thứ bị bỏ description là skill ít được gọi nhất, tức skill vừa thêm.
+
+## D-017 · Hợp đồng REST sinh từ gokit, không chép tay (2026-10-08)
+
+Bản chép tay ở `wire.ts` / `errors.ts` đã lệch gokit ở 5 chỗ sau chưa đầy một tháng
+(`412`, `502`, 4xx không có case, `FieldError` khai ngược optional, link tài liệu chết). Chi
+tiết ở [gokit-source-of-truth.md](gokit-source-of-truth.md).
+
+→ gokit xuất `contract/rest-contract.json` từ chính code (gokit ADR-0005). Kit vendor file
+đó vào `contract/`, sinh `src/types/contract.gen.ts`, và `make verify` fail khi hai thứ
+lệch nhau. `wire.ts` vẫn viết tay vì nó mang phần giải thích và type lỏng `ErrorCode`;
+`wire.contract.test.ts` đối chiếu khoá và optional của nó với bản sinh ra.
+
+Vendor chứ không fetch: kit ở GitHub, CI không với tới `git.fpt.net`.
+
+Q1 của kế hoạch (FE có theo `CodeForHTTPStatus` của gokit không) chốt là **có**. Chỗ lệch
+duy nhất có lý do — 4xx không có case riêng — được sửa ở gokit (`INVALID_INPUT`, RFC 9110
+§15.5) thay vì giữ luật riêng ở kit. Status dưới 400 (phương ngữ cũ báo lỗi kèm 200) không
+có trong luật của gokit; kit cho đi nhánh 4xx như trước.

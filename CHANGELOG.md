@@ -3,6 +3,26 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 Pre-1.0: **minor là phá vỡ**, patch là tương thích ngược.
 
+## [Unreleased]
+
+Hợp đồng gokit: `feature/rest-contract-export` (chưa tag, nền v0.8.6) — đổi thành tag khi
+gokit phát hành, xem `contract/gokit-source.json`.
+
+### Phá vỡ
+
+- **`codeFromStatus(502)`** trả `SERVICE_UNAVAILABLE` thay vì `INTERNAL_ERROR`, theo luật
+  của gokit. Chỉ ảnh hưởng backend không trả `code`. Cách sửa: chỗ nào bắt
+  `INTERNAL_ERROR` để hiện "thử lại sau" thì bắt thêm `SERVICE_UNAVAILABLE`.
+- **`FieldError`**: `code` thành optional, `reason` thành bắt buộc — đúng như gokit gửi
+  (bản cũ khai ngược). Cách sửa: chỗ đọc `fieldError.code` phải xử lý `undefined`.
+
+### Thêm
+
+- `src/types/contract.gen.ts` sinh từ hợp đồng gokit (`make contract-sync GOKIT_REF=<tag>`);
+  `make verify` fail khi file sinh ra lệch khỏi JSON đã vendor.
+- `fe-kit/types` xuất thêm `GOKIT_DEFAULT_LIMIT`, `GOKIT_MAX_LIMIT`, `GOKIT_HEADERS`,
+  `GOKIT_PROBLEM_CONTENT_TYPE`, `GOKIT_CONTRACT_SOURCE`.
+
 ## [0.1.0] — 2026-09-13
 
 Bản đầu. Bóc từ `camera-ai-platform` phần dùng chung được; giữ lại phần dính sản phẩm ở đó.
