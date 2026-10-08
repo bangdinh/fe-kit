@@ -5,6 +5,8 @@
 | [getting-started.md](getting-started.md) | Dựng dự án đầu tiên trên kit |
 | [architecture.md](architecture.md) | Quyết định một đoạn code thuộc kit hay thuộc sản phẩm |
 | [api-contract.md](api-contract.md) | Gọi API, đọc lỗi, sống chung với service không theo chuẩn |
+| [gokit-source-of-truth.md](gokit-source-of-truth.md) | Kế hoạch đưa hợp đồng REST về một nguồn duy nhất là gokit (Draft) |
+| [adoption-camera-ai-platform.md](adoption-camera-ai-platform.md) | Kế hoạch chuyển camera-ai-platform sang dùng kit (Draft) |
 | [platforms.md](platforms.md) | Subpath nào chạy ở đâu, và luật để giữ nó đúng |
 | [extension-points.md](extension-points.md) | Kit không làm được thứ bạn cần |
 | [scaffold.md](scaffold.md) | Sửa generator hoặc template |
