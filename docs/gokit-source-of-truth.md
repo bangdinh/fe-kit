@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft |
+| Status | In progress — P0–P3 đã làm trên nhánh (gokit `feature/rest-contract-export` chưa commit; fe-kit `feat/prepare-v0-2-0`). Chờ gokit commit + tag, rồi `make contract-sync` |
 | Date | 2026-10-08 |
 | Scope | fe-kit + b2b-gokit |
 | Related | [api-contract.md](api-contract.md) · [decisions.md](decisions.md) D-012 · gokit ADR-0001 (response contract) |
@@ -20,6 +20,7 @@ và `docs/api-contract.md`. Không có cơ chế nào báo khi gokit đổi. Đ�
 | 4xx không khai → code | `INTERNAL_ERROR` | `INVALID_INPUT` |
 | Tài liệu chuẩn | `docs/rest-api-standard.md` (VMSN-STD-API-001 v1.3) | trỏ `docs/REST_API_STANDARD.md` — file không còn |
 | Header chưa có | gokit đã có middleware `idempotency`, `httpcache` (`ETag`, `Cache-Control`), `deprecation` (`Deprecation`, `Sunset`), `Retry-After` | `api-contract.md` ghi "chưa có ở gokit, đừng giả định" |
+| `FieldError` (phát hiện khi làm P2) | `code` là `omitempty`, `reason` bắt buộc | khai ngược: `code` bắt buộc, `reason` optional |
 
 Dòng 412 còn cho thấy một lỗi ngay trong gokit: `codeToHTTPStatus` map
 `PRECONDITION_FAILED → 412` nhưng chiều ngược lại không có. Chép tay thì fe-kit "sửa
@@ -86,6 +87,8 @@ b2b-gokit (git.fpt.net)                       fe-kit (github)
 
 Done khi: hai ADR merge, bảng lệch ở mục 1 có hướng xử lý cho từng dòng.
 
+Đã làm: gokit ADR-0005 (Proposed), fe-kit D-017. `412` và 4xx không có case sửa ở gokit.
+
 ### P1 — gokit phát hành hợp đồng
 
 1. Export phần đang private mà generator cần đọc: danh sách code, `Code.HTTPStatus()`.
@@ -96,6 +99,10 @@ Done khi: hai ADR merge, bảng lệch ở mục 1 có hướng xử lý cho t�
 5. Cắt tag (đề xuất `v0.8.7`).
 
 Done khi: `GOWORK=off go test ./...` xanh, JSON có trong tag.
+
+Đã làm trên nhánh gokit `feature/rest-contract-export` (để chưa commit theo luật repo gokit):
+`errors.Codes()`, `Code.HTTPStatus()`, package `contract` + golden test,
+`make contract` / `make verify-contract`, README, ADR. 51 package test xanh. Còn: commit, tag.
 
 ### P2 — fe-kit tiêu thụ
 
@@ -112,6 +119,11 @@ Done khi: `GOWORK=off go test ./...` xanh, JSON có trong tag.
 
 Done khi: `make verify` xanh, không còn literal mã lỗi hay status nào gõ tay trong `src/`.
 
+Đã làm (commit `feat(types): sinh hợp đồng REST từ gokit thay vì chép tay`). JSON hiện vendor
+từ working tree của gokit; `contract/gokit-source.json` ghi rõ "chưa commit". Sau khi gokit có
+tag: `make contract-sync GOKIT_REF=<tag>` — JSON không đổi, chỉ đổi nguồn. Đối chiếu
+`wire.ts` bằng type-level test; đã thử làm lệch `FieldError` và `PageMeta` để chắc test đỏ.
+
 ### P3 — Gỡ bản chép trong tài liệu
 
 1. `docs/api-contract.md`: bỏ các bảng chép từ gokit, thay bằng link tới
@@ -121,6 +133,10 @@ Done khi: `make verify` xanh, không còn literal mã lỗi hay status nào gõ 
 3. Sửa `cmd/fe-kit/templates/claude/skills/api-contract/SKILL.md` theo cùng hướng, rồi
    `make example`.
 4. Đánh dấu `docs/history/notes/gokit-contract.md` là snapshot 2026-09-03, không cập nhật.
+
+Đã làm 2, 3, 4. Mục 1 làm khác kế hoạch: **giữ** các bảng trong `api-contract.md` vì đó là
+chỗ người đọc nhanh, thêm một câu nói rõ file sinh ra mới là nguồn và lệch thì file sinh ra
+đúng. Bỏ bảng thì người đọc phải mở JSON để biết có những mã lỗi nào.
 
 ### P4 — Quy trình
 
@@ -145,8 +161,11 @@ Done khi: `make verify` xanh, không còn literal mã lỗi hay status nào gõ 
 
 ## 7. Open questions
 
-- **Q1.** Với backend không trả `code`, FE nên suy code theo `CodeForHTTPStatus` của gokit
+- ~~**Q1.**~~ **Chốt: theo gokit**, và sửa chỗ gokit sai (4xx không có case → `INVALID_INPUT`)
+  ở gokit. Xem D-017.
+- (cũ) Với backend không trả `code`, FE nên suy code theo `CodeForHTTPStatus` của gokit
   (4xx lạ → `INTERNAL_ERROR`) hay giữ luật riêng (4xx lạ → `INVALID_INPUT`)? Hàm của gokit
   viết cho phía server; nếu FE cần luật khác thì đó là logic fe-kit và phải ghi lý do.
-- **Q2.** JSON đặt ở `contract/` gốc repo gokit hay trong `docs/03-contract/`?
+- ~~**Q2.**~~ **Chốt: `contract/` gốc repo gokit**, cạnh package Go sinh ra nó. `docs/` là văn
+  bản cho người đọc; file này là dữ liệu cho máy.
 - **Q3.** Có cần scheduled job báo khi gokit có tag mới đổi hợp đồng mà fe-kit chưa nâng?

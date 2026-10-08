@@ -1,3 +1,8 @@
+> **Snapshot 2026-09-03, không cập nhật.** Hợp đồng hiện hành sinh từ gokit
+> `contract/rest-contract.json` — xem [../../gokit-source-of-truth.md](../../gokit-source-of-truth.md).
+> Đường dẫn `docs/REST_API_STANDARD.md` nhắc dưới đây không còn; chuẩn hiện ở gokit
+> `docs/rest-api-standard.md` (VMSN-STD-API-001 v1.3).
+
 # Hợp đồng REST của b2b-gokit — bản trích cho phía FE
 
 Nguồn đã đọc (2026-09-03), đường dẫn tương đối tới `../../../../b2b-gokit/`:
