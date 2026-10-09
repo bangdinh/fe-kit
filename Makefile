@@ -60,11 +60,16 @@ hooks: ## Bật git hook của repo (mỗi clone làm một lần)
 	git config core.hooksPath .githooks
 	@echo "✓ core.hooksPath = .githooks"
 
-release: ## Cắt release (VERSION=vX.Y.Z, DRY=1 để xem trước). KHÔNG push.
+release: ## Cắt release: CHANGELOG + commit + tag kèm notes (VERSION=vX.Y.Z; DRY=1 xem trước; KHÔNG push)
+	@[ -n "$(VERSION)" ] || { echo 'Dùng: make release VERSION=v0.2.0 [DRY=1]'; exit 1; }
 	./scripts/release.sh $(VERSION)
+
+verify-tag: ## Nghiệm thu tag ĐÃ PUSH: CLI của tag sinh dự án, cài kit từ GitHub, build (VERSION=vX.Y.Z)
+	@[ -n "$(VERSION)" ] || { echo 'Dùng: make verify-tag VERSION=v0.2.0'; exit 1; }
+	./scripts/verify-tag.sh $(VERSION)
 
 clean: ## Xoá node_modules, build output, tarball
 	rm -rf node_modules example/node_modules example/apps/*/node_modules example/shared/node_modules
 	rm -rf example/apps/*/.next example/apps/*/dist example/apps/*/.expo .turbo *.tgz
 
-.PHONY: help install lint typecheck test contract-sync contract-verify check-layers example verify-example example-check verify smoke new pack hooks release clean
+.PHONY: help install lint typecheck test contract-sync contract-verify check-layers example verify-example example-check verify smoke new pack hooks release verify-tag clean

@@ -16,7 +16,9 @@ if [ -n "$leak" ]; then
 fi
 
 # 2. example/ là thứ SINH RA. Sửa tay ở đó sẽ mất ở lần `make example` sau.
-if echo "$staged" | grep -q '^example/'; then
+#    Ngoại lệ: commit release (scripts/release.sh đặt FEKIT_RELEASE=1) — bump version làm
+#    example/ đổi theo, và chính generator vừa sinh lại nó, không phải sửa tay.
+if [ -z "${FEKIT_RELEASE:-}" ] && echo "$staged" | grep -q '^example/'; then
   if ! echo "$staged" | grep -q '^cmd/fe-kit/templates/'; then
     printf '\n✗ Đang commit example/ mà không đụng tới templates.\n'
     printf '  example/ được sinh từ cmd/fe-kit/templates/ — sửa ở đó rồi chạy: make example\n'

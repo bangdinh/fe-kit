@@ -29,6 +29,9 @@ Hợp đồng gokit: **v0.8.7** (`contract/gokit-source.json`).
 - `createSessionProxy`: `origin(req)` cho build standalone sau ingress (`req.url` là
   `0.0.0.0:8080`), `loginPath` nhận hàm (tiền tố locale), `next(req)` để nối next-intl
   hoặc chặn thêm theo nghiệp vụ. `safeInternalPath` cho `returnTo`.
+- `make release` theo khuôn gokit: in trước mục CHANGELOG (`DRY=1`), sinh mục từ commit khi
+  `[Unreleased]` rỗng, sinh lại `example/` sau khi bump, annotated tag mang release notes.
+  `make verify-tag` nghiệm thu tag đã push bằng CLI của chính tag và cài kit từ GitHub.
 - `defineEnvironments({ readEnv })` — nguồn đọc biến do sản phẩm cấp, cho nơi đọc động
   `process.env` không với tới (client bundle của Next/Expo, renderer Electron).
 

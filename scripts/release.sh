@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
-# Cắt một release: verify → cập nhật version + CHANGELOG → commit → tag.
-# KHÔNG push. Push là việc của dev.
+# Cắt release MỘT phát, cùng khuôn với scripts/release.sh của b2b-gokit:
+#   mục CHANGELOG → bump version → commit → annotated tag mang release notes.
+# KHÔNG push — in lệnh push + verify-tag để dev chạy.
+#
+# Dùng:  make release VERSION=v0.2.0 DRY=1   # chỉ xem trước mục CHANGELOG, không đụng gì
+#        make release VERSION=v0.2.0         # làm thật
+#
+# Mục CHANGELOG: [Unreleased] có nội dung thì dùng nguyên văn; rỗng thì sinh từ
+# conventional commit kể từ tag trước (scripts/release-notes.js nói vì sao khác gokit).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="${1:-}"
+VERSION="${1:-${VERSION:-}}"
 DRY="${DRY:-}"
 
 if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -13,46 +20,56 @@ if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 BARE="${VERSION#v}"
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "✗ Cây làm việc còn thay đổi chưa commit. Dọn trước khi cắt release." >&2
-  exit 1
+if [ -n "$DRY" ]; then
+  echo "===== Mục CHANGELOG (DRY — chưa ghi, chưa commit, chưa tag) ====="
+  node scripts/release-notes.js "$VERSION"
+  echo "================================================================"
+  echo "Làm thật sẽ thêm: package.json → $BARE · DEFAULT_KIT_SPEC và ví dụ pin trong"
+  echo "README.md, docs/versioning.md → #$VERSION · sinh lại example/ · commit · tag."
+  echo "Chạy thật: make release VERSION=$VERSION"
+  exit 0
 fi
-if git rev-parse "$VERSION" >/dev/null 2>&1; then
-  echo "✗ Tag $VERSION đã tồn tại." >&2
-  exit 1
-fi
-if ! grep -q "^## \[$BARE\]" CHANGELOG.md; then
-  echo "✗ CHANGELOG.md chưa có mục '## [$BARE]'. Viết trước, rồi cắt tag." >&2
-  exit 1
-fi
+
+# --- guards ---
+[ "$(git branch --show-current)" = "main" ] || { echo "✗ Phải đứng ở nhánh main." >&2; exit 1; }
+[ -z "$(git status --porcelain)" ] || { echo "✗ Cây làm việc chưa sạch — commit hết trước." >&2; exit 1; }
+git rev-parse "$VERSION" >/dev/null 2>&1 && { echo "✗ Tag $VERSION đã tồn tại." >&2; exit 1; }
+# Kiểm mục CHANGELOG TRƯỚC khi chạy verify dài: rỗng thì dừng ngay.
+node scripts/release-notes.js "$VERSION" >/dev/null
 
 echo "→ verify"
 make verify
 
-if [ -n "$DRY" ]; then
-  echo
-  echo "DRY=1 — sẽ làm:"
-  echo "  package.json version → $BARE"
-  echo "  cmd/fe-kit/plan.js DEFAULT_KIT_SPEC → #$VERSION"
-  echo "  git commit -m 'chore(release): $VERSION'"
-  echo "  git tag -a $VERSION"
-  exit 0
-fi
-
-node -e "const f='package.json',fs=require('fs');const d=JSON.parse(fs.readFileSync(f));d.version='$BARE';fs.writeFileSync(f,JSON.stringify(d,null,2)+'\n')"
+# --- bump version ---
+# Thay đúng dòng "version" — JSON.stringify cả file sẽ gỡ escape (\u2014 → —) và làm bẩn diff.
+sed -i '' -E "1,/\"version\": \"[^\"]*\"/s/(\"version\": \")[^\"]*\"/\1$BARE\"/" package.json
+node -e "if(require('./package.json').version!=='$BARE'){console.error('✗ không bump được version trong package.json');process.exit(1)}"
 # Dự án sinh ra phải pin ĐÚNG tag vừa cắt — nếu không, người dùng kit nhận bản cũ.
-sed -i '' -E "s|(fe-kit#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|" cmd/fe-kit/plan.js
+# README và versioning.md có ví dụ pin; để cũ thì người đọc chép về tag cũ.
+sed -i '' -E "s|(fe-kit#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|g" cmd/fe-kit/plan.js README.md docs/versioning.md
 
-git add package.json cmd/fe-kit/plan.js CHANGELOG.md
-git commit -m "chore(release): $VERSION"
-git tag -a "$VERSION" -m "fe-kit $VERSION"
+# --- sinh lại example/ ---
+# Template in version của kit (README, layout, page) đọc từ package.json; không sinh lại
+# thì verify-example đỏ ngay trên main sau release.
+echo "→ sinh lại example/ theo version mới"
+make example >/dev/null
+make verify-example
+
+# --- CHANGELOG + commit + tag ---
+entry="$(node scripts/release-notes.js "$VERSION" --write)"
+git add package.json cmd/fe-kit/plan.js README.md docs/versioning.md CHANGELOG.md example
+git add pnpm-lock.yaml 2>/dev/null || true
+# Hook pre-commit chặn commit example/ không kèm template (chống sửa tay). Ở đây example/
+# do chính generator sinh ra, nên báo cho hook biết đây là commit release.
+FEKIT_RELEASE=1 git commit -q -m "chore(release): $VERSION"
+# Annotated tag mang release notes (= mục CHANGELOG) → GitHub hiện notes ở tag.
+# --cleanup=verbatim: giữ heading markdown; mặc định git coi dòng '#' là comment và xoá.
+printf '%s\n' "$entry" | git tag -a "$VERSION" -F - --cleanup=verbatim
 
 cat <<MSG
 
-✓ Đã cắt $VERSION tại chỗ. Chưa push.
+✓ $VERSION: CHANGELOG + commit + annotated tag (kèm release notes) tạo xong. CHƯA push.
 
-Chạy hai lệnh sau để đưa lên remote:
-
-  git push origin HEAD
-  git push origin $VERSION
+  Push:    git push origin main && git push origin $VERSION
+  Verify:  make verify-tag VERSION=$VERSION    # sau khi push: cài kit từ GitHub đúng tag này
 MSG
