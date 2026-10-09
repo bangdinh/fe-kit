@@ -42,7 +42,7 @@ máy nên không bắt được tag quên bump `DEFAULT_KIT_SPEC` hay tag chưa 
 
 ```jsonc
 "dependencies": {
-  "fe-kit": "github:bangdinh/fe-kit#v0.1.0"
+  "fe-kit": "github:bangdinh/fe-kit#v0.1.1"
 }
 ```
 

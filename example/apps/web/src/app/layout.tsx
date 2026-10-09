@@ -5,7 +5,7 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'Example',
-  description: 'Dựng trên fe-kit v0.1.0',
+  description: 'Dựng trên fe-kit v0.1.1',
 };
 
 // Token ra CSS variable một lần ở đây, để CSS thuần đọc được cùng bảng mà antd

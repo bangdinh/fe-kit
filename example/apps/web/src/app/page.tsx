@@ -7,7 +7,7 @@ export default function Home() {
     <main style={{ padding: 'var(--fk-space-xl)', maxWidth: 720, margin: '0 auto' }}>
       <h1 style={{ fontSize: 'var(--fk-font-size-xxl)' }}>Example</h1>
       <p style={{ color: 'var(--fk-color-text-muted)' }}>
-        Dựng trên <code>fe-kit</code> v0.1.0. Môi trường: <strong>{env.current()}</strong>
+        Dựng trên <code>fe-kit</code> v0.1.1. Môi trường: <strong>{env.current()}</strong>
       </p>
       <ul style={{ lineHeight: 'var(--fk-line-height-relaxed)' }}>
         <li>Bảng môi trường: <code>shared/src/env.ts</code></li>

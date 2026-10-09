@@ -12,7 +12,7 @@ export const PLATFORMS = ['web', 'mobile', 'desktop'];
  * Dạng shorthand `github:owner/repo#tag` — npm và pnpm đều hiểu, và nó ngắn hơn
  * URL git+ssh đầy đủ. `qc-kit` và `flutter-kit` cũng pin theo đúng dạng này.
  */
-export const DEFAULT_KIT_SPEC = 'github:bangdinh/fe-kit#v0.1.0';
+export const DEFAULT_KIT_SPEC = 'github:bangdinh/fe-kit#v0.1.1';
 
 export class PlanError extends Error {}
 

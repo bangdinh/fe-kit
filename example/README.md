@@ -1,6 +1,6 @@
 # Example
 
-Dựng trên [`fe-kit`](https://github.com/bangdinh/fe-kit) v0.1.0 —
+Dựng trên [`fe-kit`](https://github.com/bangdinh/fe-kit) v0.1.1 —
 nền tảng: **web, mobile, desktop**.
 
 ## Chạy

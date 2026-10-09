@@ -5,6 +5,8 @@ Pre-1.0: **minor là phá vỡ**, patch là tương thích ngược.
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-09
+
 Hợp đồng gokit: **v0.8.7** (`contract/gokit-source.json`).
 
 ### Phá vỡ

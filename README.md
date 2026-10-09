@@ -52,7 +52,7 @@ Kit chưa publish lên registry nên pin theo tag git:
 ```jsonc
 // package.json của dự án
 "dependencies": {
-  "fe-kit": "github:bangdinh/fe-kit#v0.1.0"
+  "fe-kit": "github:bangdinh/fe-kit#v0.1.1"
 }
 ```
 
