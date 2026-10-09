@@ -25,7 +25,7 @@ if [ -n "$DRY" ]; then
   node scripts/release-notes.js "$VERSION"
   echo "================================================================"
   echo "Làm thật sẽ thêm: package.json → $BARE · DEFAULT_KIT_SPEC và ví dụ pin trong"
-  echo "README.md, docs/versioning.md → #$VERSION · sinh lại example/ · commit · tag."
+  echo "README.md, docs/getting-started.md, docs/versioning.md → #$VERSION · sinh lại example/ · commit · tag."
   echo "Chạy thật: make release VERSION=$VERSION"
   exit 0
 fi
@@ -45,8 +45,8 @@ make verify
 sed -i '' -E "1,/\"version\": \"[^\"]*\"/s/(\"version\": \")[^\"]*\"/\1$BARE\"/" package.json
 node -e "if(require('./package.json').version!=='$BARE'){console.error('✗ không bump được version trong package.json');process.exit(1)}"
 # Dự án sinh ra phải pin ĐÚNG tag vừa cắt — nếu không, người dùng kit nhận bản cũ.
-# README và versioning.md có ví dụ pin; để cũ thì người đọc chép về tag cũ.
-sed -i '' -E "s|(fe-kit#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|g" cmd/fe-kit/plan.js README.md docs/versioning.md
+# README, getting-started.md và versioning.md có ví dụ pin; để cũ thì người đọc chép về tag cũ.
+sed -i '' -E "s|(fe-kit#)v[0-9]+\.[0-9]+\.[0-9]+|\1$VERSION|g" cmd/fe-kit/plan.js README.md docs/getting-started.md docs/versioning.md
 
 # --- sinh lại example/ ---
 # Template in version của kit (README, layout, page) đọc từ package.json; không sinh lại
@@ -57,7 +57,7 @@ make verify-example
 
 # --- CHANGELOG + commit + tag ---
 entry="$(node scripts/release-notes.js "$VERSION" --write)"
-git add package.json cmd/fe-kit/plan.js README.md docs/versioning.md CHANGELOG.md example
+git add package.json cmd/fe-kit/plan.js README.md docs/getting-started.md docs/versioning.md CHANGELOG.md example
 git add pnpm-lock.yaml 2>/dev/null || true
 # Hook pre-commit chặn commit example/ không kèm template (chống sửa tay). Ở đây example/
 # do chính generator sinh ra, nên báo cho hook biết đây là commit release.

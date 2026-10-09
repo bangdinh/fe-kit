@@ -23,7 +23,7 @@ make verify-tag VERSION=v0.2.0      # sau khi push
 1. Chặn nếu không ở `main`, cây bẩn, tag đã có, hoặc không có gì để release.
 2. `make verify`.
 3. Bump `package.json`, `DEFAULT_KIT_SPEC` trong `plan.js` (dự án sinh ra pin đúng tag vừa
-   cắt), và ví dụ pin trong `README.md`, `docs/versioning.md`.
+   cắt), và ví dụ pin trong `README.md`, `docs/getting-started.md`, `docs/versioning.md`.
 4. Sinh lại `example/` — template in version của kit, không sinh lại thì `verify-example`
    đỏ ngay trên `main`.
 5. Ghi mục CHANGELOG, commit `chore(release): vX.Y.Z`, annotated tag mang release notes.
