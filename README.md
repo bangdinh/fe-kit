@@ -19,12 +19,15 @@ client HTTP, OIDC, phiên, chấm quyền, log, token giao diện, và một gen
 ## 1. Dựng một dự án mới
 
 ```bash
-npx fe-kit new kho-hang --platforms web,mobile
+npx --yes --package='github:bangdinh/fe-kit#v0.1.1' fe-kit new kho-hang --platforms web,mobile
 cd kho-hang
 pnpm install
 cp .env.example .env.local
 pnpm dev                      # http://localhost:3000
 ```
+
+Kit chưa publish lên registry nên CLI chạy thẳng từ tag git. Lệnh `npx fe-kit` không kèm
+`--package` sẽ tìm package trùng tên trên npm, không phải kit này.
 
 Đứng trong repo kit thì dùng `make`:
 

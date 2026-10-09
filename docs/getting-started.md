@@ -7,12 +7,15 @@ Node ≥ 22.12 · pnpm 12 (`npx pnpm@12.4.1` cũng được, không cần cài t
 ## Dựng dự án
 
 ```bash
-npx fe-kit new kho-hang --platforms web,mobile
+npx --yes --package='github:bangdinh/fe-kit#v0.1.1' fe-kit new kho-hang --platforms web,mobile
 cd kho-hang
 pnpm install
 cp .env.example .env.local
 pnpm dev
 ```
+
+Kit chưa publish lên registry nên CLI chạy thẳng từ tag git. Lệnh `npx fe-kit` không kèm
+`--package` sẽ tìm package trùng tên trên npm, không phải kit này.
 
 Mở http://localhost:3000. Trang chủ công khai nên chạy được ngay — chưa cần IdP nào.
 
